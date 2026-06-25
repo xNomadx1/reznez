@@ -42,6 +42,7 @@ impl From<u8> for Color {
     }
 }
 
+// Determines NTSC/PAL chroma
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy, Debug, FromPrimitive, Sequence)]
 pub enum Hue {
     Gray,
@@ -68,6 +69,7 @@ impl From<u4> for Hue {
     }
 }
 
+// Determines NTSC/PAL luma
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy, Debug, FromPrimitive, Sequence)]
 pub enum Brightness {
     Minimum,

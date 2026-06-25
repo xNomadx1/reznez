@@ -56,7 +56,7 @@ impl WindowRenderer for NameTableRenderer {
         let sps = nes.bus().system_palette.emphasis_section(nes.bus().ppu_regs.mask().emphasis_index());
 
         let backdrop = bus.palette_ram().backdrop_color();
-        self.frame.set_backdrop_color(sps.lookup_rgb(backdrop));
+        self.frame.set_backdrop_rgb(sps.lookup_rgb(backdrop));
         let background_table = PatternTable::background_side(bus);
 
         NameTable::new(bus.raw_name_table(NameTableQuadrant::TopLeft))
