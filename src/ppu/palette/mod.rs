@@ -1,6 +1,7 @@
 pub mod bank_color_assigner;
 pub mod color;
 pub mod color_t;
+pub mod composite_decoder;
 pub mod palette;
 pub mod palette_index;
 pub mod palette_table_index;

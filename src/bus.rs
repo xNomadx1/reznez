@@ -25,6 +25,7 @@ use crate::memory::regions::small_page::SmallPage;
 use crate::memory::window::{ChrSource, PrgSource};
 use crate::ppu::name_table::name_table_mirroring::{NameTableMirroring, NameTableSource};
 use crate::ppu::name_table::name_table_quadrant::NameTableQuadrant;
+use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::ppu_clock::PpuClock;
 use crate::ppu::palette::system_palette::SystemPalette;
 use crate::ppu::ppu::Ppu;
@@ -75,7 +76,7 @@ pub struct Bus {
     pub name_table_mirrorings: &'static [NameTableMirroring], // TODO: Move into ChrMemory.
     pub dip_switch: u8,
 
-    pub system_palette: SystemPalette,
+    pub composite_decoder: Box<dyn CompositeDecoder>,
 }
 
 impl Bus {
@@ -121,7 +122,7 @@ impl Bus {
             name_table_mirrorings,
             dip_switch,
 
-            system_palette,
+            composite_decoder: Box::new(system_palette),
         }
     }
 

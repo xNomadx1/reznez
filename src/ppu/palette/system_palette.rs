@@ -3,6 +3,7 @@ use num_traits::FromPrimitive;
 
 use crate::ppu::palette::color::{Brightness, Color, Hue};
 use crate::ppu::palette::color_t::ColorT;
+use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::ppu::register::ppu_registers::Mask;
@@ -63,13 +64,6 @@ impl SystemPalette {
         self.0[mask.emphasis_index()].0[color.to_usize()]
     }
 
-    pub fn lookup_rgbt(&self, color_t: ColorT, mask: Mask) -> Rgbt {
-        match color_t {
-            ColorT::Transparent => Rgbt::Transparent,
-            ColorT::Opaque(color) => Rgbt::Opaque(self.lookup_rgb(color, mask)),
-        }
-    }
-
     pub fn emphasis_section(&self, emphasis_index: usize) -> &SystemPaletteSection {
         &self.0[emphasis_index]
     }
@@ -107,6 +101,12 @@ impl SystemPalette {
         }
 
         Ok(())
+    }
+}
+
+impl CompositeDecoder for SystemPalette {
+    fn decode_to_rgb(&self, color: Color, mask: Mask) -> Rgb {
+        self.lookup_rgb(color, mask)
     }
 }
 

@@ -2,6 +2,7 @@ use crate::gui::debug_screens::pattern_table::PatternTable;
 use crate::gui::debug_screens::sprite::Sprite;
 use crate::bus::Bus;
 use crate::memory::primitives::dram_byte::DramByte;
+use crate::ppu::palette::system_palette::SystemPalette;
 use crate::ppu::pixel_index::PixelRow;
 use crate::ppu::sprite::oam::Oam;
 use crate::ppu::sprite::oam_address::OamAddress;
@@ -65,20 +66,20 @@ impl Oam {
         })
     }
 
-    pub fn render(&self, bus: &Bus, frame: &mut Frame) {
+    pub fn render(&self, system_palette: &SystemPalette, bus: &Bus, frame: &mut Frame) {
         for pixel_row in PixelRow::iter() {
-            self.render_scanline(pixel_row, bus, frame);
+            self.render_scanline(system_palette, pixel_row, bus, frame);
         }
     }
 
-    pub fn render_scanline(&self, pixel_row: PixelRow, bus: &Bus, frame: &mut Frame) {
+    pub fn render_scanline(&self, system_palette: &SystemPalette, pixel_row: PixelRow, bus: &Bus, frame: &mut Frame) {
         frame.clear_sprite_line(pixel_row);
 
         let sprite_table_side = bus.ppu_regs.sprite_table_side();
         let mut pattern_table = PatternTable::from_mem(bus, sprite_table_side);
         let sprite_height = bus.ppu_regs.sprite_height();
 
-        let sps = bus.system_palette.emphasis_section(bus.ppu_regs.mask().emphasis_index());
+        let sps = system_palette.emphasis_section(bus.ppu_regs.mask().emphasis_index());
 
         // FIXME: No more sprites will be found once the end of OAM is reached,
         // effectively hiding any sprites before OAM[OAMADDR].

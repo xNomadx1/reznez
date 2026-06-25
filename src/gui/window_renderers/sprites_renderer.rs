@@ -36,7 +36,7 @@ impl WindowRenderer for SpritesRenderer {
 
         let sprites = nes.bus().oam.sprites();
         let bus = nes.bus();
-        let sps = bus.system_palette.emphasis_section(bus.ppu_regs.mask().emphasis_index());
+        let sps = world.config.system_palette.emphasis_section(bus.ppu_regs.mask().emphasis_index());
 
         for (index, sprite) in sprites.iter().enumerate() {
             let tile = sprite.render_normal_height(sps, &PatternTable::sprite_side(bus), bus.palette_ram());

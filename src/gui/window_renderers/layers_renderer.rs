@@ -50,12 +50,12 @@ impl WindowRenderer for LayersRenderer {
         let bus = nes.bus();
 
         self.frame.clear();
-        bus.oam.only_front_sprites().render(bus, &mut self.frame);
+        bus.oam.only_front_sprites().render(&world.config.system_palette, bus, &mut self.frame);
         self.buffer
             .place_frame(0, 245 + TOP_MENU_BAR_HEIGHT, &self.frame);
 
         self.frame.clear();
-        bus.oam.only_back_sprites().render(bus, &mut self.frame);
+        bus.oam.only_back_sprites().render(&world.config.system_palette, bus, &mut self.frame);
         self.buffer
             .place_frame(261, 245 + TOP_MENU_BAR_HEIGHT, &self.frame);
 
