@@ -26,6 +26,7 @@ use crate::memory::window::{ChrSource, PrgSource};
 use crate::ppu::name_table::name_table_mirroring::{NameTableMirroring, NameTableSource};
 use crate::ppu::name_table::name_table_quadrant::NameTableQuadrant;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
+use crate::ppu::palette::ntsc_float_decoder::NtscFloatDecoder;
 use crate::ppu::ppu_clock::PpuClock;
 use crate::ppu::palette::system_palette::SystemPalette;
 use crate::ppu::ppu::Ppu;
@@ -76,7 +77,9 @@ pub struct Bus {
     pub name_table_mirrorings: &'static [NameTableMirroring], // TODO: Move into ChrMemory.
     pub dip_switch: u8,
 
-    pub composite_decoder: Box<dyn CompositeDecoder>,
+    pub use_ntsc_float_decoder: bool,
+    pub system_palette: SystemPalette,
+    pub ntsc_float_decoder: NtscFloatDecoder,
 }
 
 impl Bus {
@@ -122,7 +125,9 @@ impl Bus {
             name_table_mirrorings,
             dip_switch,
 
-            composite_decoder: Box::new(system_palette),
+            use_ntsc_float_decoder: false,
+            system_palette,
+            ntsc_float_decoder: NtscFloatDecoder::new(),
         }
     }
 
@@ -552,6 +557,14 @@ impl Bus {
     // See "APU Register Activation" in the README and asm file here: https://github.com/100thCoin/AccuracyCoin
     pub fn apu_registers_active(&self) -> bool {
         matches!(*self.cpu_pinout.address_bus, 0x4000..=0x401F)
+    }
+
+    pub fn composite_decoder(&self) -> &dyn CompositeDecoder {
+        if self.use_ntsc_float_decoder {
+            &self.ntsc_float_decoder
+        } else {
+            &self.system_palette
+        }
     }
 }
 

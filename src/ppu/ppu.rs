@@ -217,7 +217,7 @@ impl Ppu {
                 if bus.ppu_regs.background_enabled() {
                     // TODO: Figure out where this goes.
                     let ubc = bus.palette_ram().backdrop_color();
-                    frame.set_backdrop_rgb(bus.composite_decoder.decode_to_rgb(ubc, ppumask));
+                    frame.set_backdrop_rgb(bus.composite_decoder().decode_to_rgb(ubc, ppumask));
 
                     let column_in_tile = bus.ppu_regs.fine_x_scroll;
                     let palette_table_index = bus.ppu.attribute_register.palette_table_index(column_in_tile);
@@ -226,7 +226,7 @@ impl Ppu {
                     background_pixel = bus.ppu.pattern_register
                         .palette_index(column_in_tile)
                         .map_or(Rgbt::Transparent, |palette_index| {
-                            let rgb = bus.composite_decoder.decode_to_rgb(palette[palette_index], bus.ppu_regs.mask());
+                            let rgb = bus.composite_decoder().decode_to_rgb(palette[palette_index], bus.ppu_regs.mask());
                             Rgbt::Opaque(rgb)
                         });
                 }
@@ -249,7 +249,7 @@ impl Ppu {
                         sprite_pixel = ColorT::Transparent;
                     }
 
-                    let sprite_pixel = bus.composite_decoder.decode_to_rgbt(sprite_pixel, ppumask);
+                    let sprite_pixel = bus.composite_decoder().decode_to_rgbt(sprite_pixel, ppumask);
 
                     let bank_pixel = if sprite_pixel.is_transparent() {
                         Rgbt::Transparent

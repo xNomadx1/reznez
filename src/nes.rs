@@ -96,6 +96,10 @@ impl Nes {
         &self.bus
     }
 
+    pub fn bus_mut(&mut self) -> &mut Bus {
+        &mut self.bus
+    }
+
     pub fn mapper(&self) -> &dyn Mapper {
         &*self.mapper
     }

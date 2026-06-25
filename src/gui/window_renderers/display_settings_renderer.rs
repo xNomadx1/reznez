@@ -29,6 +29,7 @@ impl WindowRenderer for DisplaySettingsRenderer {
                     .striped(true)
                     .show(ui, |ui| {
                         ui.checkbox(nes.frame_mut().show_overscan_mut(), "Show overscan");
+                        ui.checkbox(&mut nes.bus_mut().use_ntsc_float_decoder, "Use NTSC filter");
                         ui.end_row();
                     });
             } else {
