@@ -143,9 +143,9 @@ impl PpuRegisters {
         self.ppu_io_bus.update(value);
 
         let fields = splitbits!(value, "efgs blmz");
-        self.mask.emphasize_blue = fields.e;
-        self.mask.emphasize_green = fields.f;
-        self.mask.emphasize_red = fields.g;
+        self.mask.emphasis.blue = fields.e;
+        self.mask.emphasis.green = fields.f;
+        self.mask.emphasis.red = fields.g;
         self.mask.sprites_enabled = fields.s;
         self.mask.background_enabled = fields.b;
         self.mask.left_sprite_columns_enabled = fields.l;
@@ -392,9 +392,7 @@ pub struct Mask {
     left_sprite_columns_enabled: bool,
     background_enabled: bool,
     sprites_enabled: bool,
-    emphasize_red: bool,
-    emphasize_green: bool,
-    emphasize_blue: bool,
+    emphasis: Emphasis,
 }
 
 impl Mask {
@@ -415,13 +413,24 @@ impl Mask {
     pub fn left_sprite_columns_enabled(self) -> bool { self.left_sprite_columns_enabled }
     pub fn background_enabled(self) -> bool { self.background_enabled }
     pub fn sprites_enabled(self) -> bool { self.sprites_enabled }
-    pub fn emphasize_red(self) -> bool { self.emphasize_red }
-    pub fn emphasize_green(self) -> bool { self.emphasize_green }
-    pub fn emphasize_blue(self) -> bool { self.emphasize_blue }
+    pub fn emphasis(self) -> Emphasis { self.emphasis }
+}
 
-    pub fn emphasis_index(self) -> usize {
-        ((self.emphasize_blue as usize) << 2)
-            | ((self.emphasize_green as usize) << 1)
-            | (self.emphasize_red as usize)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Emphasis {
+    red: bool,
+    green: bool,
+    blue: bool,
+}
+
+impl Emphasis {
+    pub fn red(self) -> bool { self.red }
+    pub fn green(self) -> bool { self.green }
+    pub fn blue(self) -> bool { self.blue }
+
+    pub fn index(self) -> usize {
+        ((self.blue as usize) << 2)
+            | ((self.green as usize) << 1)
+            | (self.red as usize)
     }
 }

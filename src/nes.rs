@@ -390,14 +390,14 @@ impl Nes {
             if latest.sprites_enabled.set_value_then_detect(mask.sprites_enabled()) {
                 info!("Sprites enabled changed to {}", mask.sprites_enabled());
             }
-            if latest.emphasize_red.set_value_then_detect(mask.emphasize_red()) {
-                info!("Emphasize red enabled changed to {}", mask.emphasize_red());
+            if latest.emphasize_red.set_value_then_detect(mask.emphasis().red()) {
+                info!("Emphasize red enabled changed to {}", mask.emphasis().red());
             }
-            if latest.emphasize_green.set_value_then_detect(mask.emphasize_green()) {
-                info!("Emphasize green enabled changed to {}", mask.emphasize_green());
+            if latest.emphasize_green.set_value_then_detect(mask.emphasis().green()) {
+                info!("Emphasize green enabled changed to {}", mask.emphasis().green());
             }
-            if latest.emphasize_blue.set_value_then_detect(mask.emphasize_blue()) {
-                info!("Emphasize blue enabled changed to {}", mask.emphasize_blue());
+            if latest.emphasize_blue.set_value_then_detect(mask.emphasis().blue()) {
+                info!("Emphasize blue enabled changed to {}", mask.emphasis().blue());
             }
 
             let regs = &self.bus.ppu_regs;

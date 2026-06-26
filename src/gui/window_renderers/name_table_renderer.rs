@@ -53,7 +53,7 @@ impl WindowRenderer for NameTableRenderer {
         self.buffer.place_wrapping_vertical_line(0, 0, height, Rgb::new(255, 255, 255));
         self.buffer.place_wrapping_vertical_line(width, 0, height, Rgb::new(255, 255, 255));
 
-        let sps = world.config.system_palette.emphasis_section(nes.bus().ppu_regs.mask().emphasis_index());
+        let sps = world.config.system_palette.emphasis_section(nes.bus().ppu_regs.mask().emphasis().index());
 
         let backdrop = bus.palette_ram().backdrop_color();
         self.frame.set_backdrop_rgb(sps.lookup_rgb(backdrop));
