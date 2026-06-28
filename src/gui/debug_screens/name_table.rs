@@ -5,10 +5,9 @@ use crate::memory::regions::palette_ram::PaletteRam;
 use crate::gui::debug_screens::attribute_table::AttributeTable;
 use crate::ppu::constants::{NAME_TABLE_SIZE, NAME_TABLE_WITH_ATTRIBUTES_SIZE};
 use crate::ppu::name_table::background_tile_index::BackgroundTileIndex;
+use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::palette_table_index::PaletteTableIndex;
-use crate::ppu::palette::rgbt::Rgbt;
 use crate::gui::debug_screens::pattern_table::PatternTable;
-use crate::ppu::palette::system_palette::SystemPaletteSection;
 use crate::ppu::pixel_index::{PixelColumn, PixelRow};
 use crate::ppu::render::frame::Frame;
 use crate::ppu::tile_number::TileNumber;
@@ -30,14 +29,12 @@ impl<'a> NameTable<'a> {
 
     pub fn render(
         &self,
-        system_palette_section: &SystemPaletteSection,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
         frame: &mut Frame,
     ) {
         for pixel_row in PixelRow::iter() {
             self.render_scanline(
-                system_palette_section,
                 pixel_row,
                 pattern_table,
                 palette_ram,
@@ -51,7 +48,6 @@ impl<'a> NameTable<'a> {
     #[allow(clippy::too_many_arguments)]
     fn render_scanline(
         &self,
-        system_palette_section: &SystemPaletteSection,
         pixel_row: PixelRow,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
@@ -61,7 +57,6 @@ impl<'a> NameTable<'a> {
     ) {
         for pixel_column in PixelColumn::iter() {
             self.render_pixel(
-                system_palette_section,
                 pixel_column,
                 pixel_row,
                 pattern_table,
@@ -76,7 +71,6 @@ impl<'a> NameTable<'a> {
     #[allow(clippy::too_many_arguments)]
     fn render_pixel(
         &self,
-        system_palette_section: &SystemPaletteSection,
         pixel_column: PixelColumn,
         pixel_row: PixelRow,
         pattern_table: &PatternTable,
@@ -90,9 +84,8 @@ impl<'a> NameTable<'a> {
         let background_tile_index = BackgroundTileIndex::from_tile_column_row(tile_column, tile_row);
 
         let (tile_number, palette_table_index) = self.tile_entry_at(background_tile_index);
-        let mut tile_sliver = [Rgbt::Transparent; 8];
+        let mut tile_sliver = [ColorT::Transparent; 8];
         pattern_table.render_pixel_sliver(
-            system_palette_section,
             tile_number,
             row_in_tile,
             palette_ram.background_palette(palette_table_index),

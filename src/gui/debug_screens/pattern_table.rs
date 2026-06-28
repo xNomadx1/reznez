@@ -4,6 +4,7 @@
 use enum_iterator::all;
 
 use crate::bus::Bus;
+use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::palette::Palette;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::ppu::palette::system_palette::SystemPaletteSection;
@@ -75,14 +76,12 @@ impl<'a> PatternTable<'a> {
 
     pub fn render_background_tile(
         &self,
-        system_palette_section: &SystemPaletteSection,
         tile_number: TileNumber,
         palette: Palette,
         tile: &mut Tile,
     ) {
         for row_in_tile in all::<RowInTile>() {
             self.render_pixel_sliver(
-                system_palette_section,
                 tile_number,
                 row_in_tile,
                 palette,
@@ -95,11 +94,10 @@ impl<'a> PatternTable<'a> {
     #[rustfmt::skip]
     pub fn render_pixel_sliver(
         &self,
-        system_palette_section: &SystemPaletteSection,
         tile_number: TileNumber,
         row_in_tile: RowInTile,
         palette: Palette,
-        tile_sliver: &mut [Rgbt; 8],
+        tile_sliver: &mut [ColorT; 8],
     ) {
         let index = PATTERN_SIZE * u32::from(tile_number);
         let low_index = index + row_in_tile as u32;
@@ -112,20 +110,19 @@ impl<'a> PatternTable<'a> {
             let mask = 0b1000_0000 >> (column_in_tile as u32);
             let low_bit = low_byte & mask != 0;
             let high_bit = high_byte & mask != 0;
-            let color_t = palette.color_t_from_low_high(low_bit, high_bit);
-            *pixel = system_palette_section.lookup_rgbt(color_t);
+            *pixel = palette.color_t_from_low_high(low_bit, high_bit);
         }
     }
 }
 
-pub struct Tile(pub [[Rgbt; 8]; 8]);
+pub struct Tile(pub [[ColorT; 8]; 8]);
 
 impl Tile {
     pub fn new() -> Tile {
-        Tile([[Rgbt::Transparent; 8]; 8])
+        Tile([[ColorT::Transparent; 8]; 8])
     }
 
-    pub fn row_mut(&mut self, row: RowInTile) -> &mut [Rgbt; 8] {
+    pub fn row_mut(&mut self, row: RowInTile) -> &mut [ColorT; 8] {
         &mut self.0[row as usize]
     }
 }

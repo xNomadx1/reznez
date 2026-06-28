@@ -424,6 +424,8 @@ pub struct Emphasis {
 }
 
 impl Emphasis {
+    pub const OFF: Self = Self { red: false, green: false, blue: false };
+
     pub fn red(self) -> bool { self.red }
     pub fn green(self) -> bool { self.green }
     pub fn blue(self) -> bool { self.blue }

@@ -214,12 +214,12 @@ impl Ppu {
                 let clock = bus.ppu_clock();
                 let (pixel_column, pixel_row) = PixelIndex::try_from_clock(clock).unwrap().to_column_row();
 
-                let mut background_pixel = Rgbt::Transparent;
+                let mut background_pixel = ColorT::Transparent;
                 let mut background_bank_pixel = None;
                 if bus.ppu_regs.background_enabled() {
                     // TODO: Figure out where this goes.
                     let ubc = bus.palette_ram().backdrop_color();
-                    frame.set_backdrop_rgb(bus.composite_decoder().decode_to_rgb(ubc, emphasis));
+                    frame.set_backdrop_color(ubc, emphasis);
 
                     let column_in_tile = bus.ppu_regs.fine_x_scroll;
                     let palette_table_index = bus.ppu.attribute_register.palette_table_index(column_in_tile);
@@ -227,11 +227,7 @@ impl Ppu {
 
                     background_pixel = bus.ppu.pattern_register
                         .palette_index(column_in_tile)
-                        .map_or(Rgbt::Transparent, |palette_index| {
-                            let rgb = bus.composite_decoder().decode_to_rgb(palette[palette_index], bus.ppu_regs.mask().emphasis());
-                            Rgbt::Opaque(rgb)
-                        });
-
+                        .map_or(ColorT::Transparent, |palette_index| ColorT::Opaque(palette[palette_index]));
                     background_bank_pixel = Some(if background_pixel.is_transparent() {
                         Rgbt::Transparent
                     } else {
@@ -251,8 +247,6 @@ impl Ppu {
                     if !bus.ppu_regs.sprites_enabled() {
                         sprite_pixel = ColorT::Transparent;
                     }
-
-                    let sprite_pixel = bus.composite_decoder().decode_to_rgbt(sprite_pixel, emphasis);
 
                     sprite_bank_pixel = Some(if sprite_pixel.is_transparent() {
                         Rgbt::Transparent

@@ -55,12 +55,12 @@ impl WindowRenderer for PatternTableRenderer {
             };
             for index in 0..=255 {
                 PatternTable::from_mem(bus, side).render_background_tile(
-                    world.config.system_palette.emphasis_section(bus.ppu_regs.mask().emphasis().index()),
                     TileNumber::new(index),
                     palette,
                     &mut self.tile,
                 );
                 self.buffer.place_tile(
+                    bus.composite_decoder(),
                     (8 + 1) * (index as usize % 16) + offset,
                     (8 + 1) * (index as usize / 16) + TOP_MENU_BAR_HEIGHT / 3,
                     &self.tile,

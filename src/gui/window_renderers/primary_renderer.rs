@@ -27,7 +27,6 @@ use crate::gui::window_renderers::sprites_renderer::SpritesRenderer;
 use crate::gui::window_renderers::status_renderer::StatusRenderer;
 pub use crate::gui::world::World;
 use crate::ppu::pixel_index::{PixelColumn, PixelRow};
-use crate::ppu::render::frame::Frame;
 
 const MENU_HOVER_BLUE: Color32 = Color32::from_rgb(70, 90, 140);
 const PAUSED_VERMILION_RED: Color32 = Color32::from_rgb(250, 60, 60);
@@ -297,16 +296,12 @@ impl WindowRenderer for PrimaryRenderer {
             return;
         }
 
-        let display_frame = |frame: &Frame, _frame_index| {
-            frame.copy_to_rgba_buffer(pixels.frame_mut().try_into().unwrap());
-        };
-
         if let Some(nes) = &mut world.nes {
             execute_frame(
                 nes,
                 &world.config,
                 std::mem::replace(&mut world.events, Events::none()),
-                display_frame,
+                pixels,
             );
         }
     }
