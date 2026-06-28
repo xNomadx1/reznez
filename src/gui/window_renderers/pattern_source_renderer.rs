@@ -3,20 +3,12 @@ use pixels::Pixels;
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
-use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::pixel_index::{PixelColumn, PixelRow};
-use crate::ppu::render::frame::DebugBuffer;
 
-pub struct PatternSourceRenderer {
-    buffer: DebugBuffer<{ PixelColumn::COLUMN_COUNT }, { PixelRow::ROW_COUNT }>,
-}
+pub struct PatternSourceRenderer;
 
 impl PatternSourceRenderer {
-    pub fn new() -> Self {
-        Self {
-            buffer: DebugBuffer::new(Rgb::WHITE),
-        }
-    }
+    pub fn new() -> Self { PatternSourceRenderer }
 }
 
 impl WindowRenderer for PatternSourceRenderer {
@@ -33,8 +25,7 @@ impl WindowRenderer for PatternSourceRenderer {
             return;
         };
 
-        self.buffer.place_frame(0, 0, nes.ppu().pattern_source_frame());
-        self.buffer.copy_to_rgba_buffer(pixels.frame_mut());
+        nes.ppu().pattern_source_debug_buffer().copy_to_rgba_buffer(pixels.frame_mut());
     }
 
     fn width(&self) -> usize {

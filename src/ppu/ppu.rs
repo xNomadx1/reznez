@@ -8,14 +8,15 @@ use crate::memory::ppu::ppu_address::PpuAddress;
 use crate::memory::signal_level::SignalLevel;
 use crate::ppu::cycle_action::cycle_action::CycleAction;
 use crate::ppu::cycle_action::frame_actions::{FrameActions, NTSC_FRAME_ACTIONS};
+use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::pattern_table_side::PatternTableSide;
-use crate::ppu::pixel_index::PixelIndex;
+use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
 use crate::ppu::register::ppu_registers::Toggle;
 use crate::ppu::register::registers::attribute_register::AttributeRegister;
 use crate::ppu::register::registers::pattern_register::PatternRegister;
-use crate::ppu::render::frame::Frame;
+use crate::ppu::render::frame::{DebugBuffer, Frame};
 use crate::ppu::sprite::sprite_attributes::SpriteAttributes;
 use crate::ppu::sprite::oam_registers::OamRegisters;
 use crate::ppu::sprite::sprite_y::SpriteY;
@@ -43,7 +44,7 @@ pub struct Ppu {
 
     frame_actions: FrameActions,
 
-    pattern_source_frame: Frame,
+    pattern_source_debug_buffer: DebugBuffer<{PixelColumn::COLUMN_COUNT}, {PixelRow::ROW_COUNT}>,
     bank_color_assigner: BankColorAssigner,
 }
 
@@ -67,7 +68,7 @@ impl Ppu {
 
             frame_actions: NTSC_FRAME_ACTIONS.clone(),
 
-            pattern_source_frame: Frame::new(),
+            pattern_source_debug_buffer: DebugBuffer::new(Rgb::BLACK),
             bank_color_assigner,
         }
     }
@@ -214,6 +215,7 @@ impl Ppu {
                 let (pixel_column, pixel_row) = PixelIndex::try_from_clock(clock).unwrap().to_column_row();
 
                 let mut background_pixel = Rgbt::Transparent;
+                let mut background_bank_pixel = None;
                 if bus.ppu_regs.background_enabled() {
                     // TODO: Figure out where this goes.
                     let ubc = bus.palette_ram().backdrop_color();
@@ -229,21 +231,22 @@ impl Ppu {
                             let rgb = bus.composite_decoder().decode_to_rgb(palette[palette_index], bus.ppu_regs.mask().emphasis());
                             Rgbt::Opaque(rgb)
                         });
+
+                    background_bank_pixel = Some(if background_pixel.is_transparent() {
+                        Rgbt::Transparent
+                    } else {
+                        let rgb = bus.ppu.bank_color_assigner.rgb_for_source(bus.ppu.pattern_register.current_peek().source());
+                        Rgbt::Opaque(rgb)
+                    });
+
                 }
 
                 frame.set_background_pixel(pixel_column, pixel_row, background_pixel);
 
-                let bank_pixel = if background_pixel.is_transparent() {
-                    Rgbt::Transparent
-                } else {
-                    let rgb = bus.ppu.bank_color_assigner.rgb_for_source(bus.ppu.pattern_register.current_peek().source());
-                    Rgbt::Opaque(rgb)
-                };
-                bus.ppu.pattern_source_frame.set_background_pixel(pixel_column, pixel_row, bank_pixel);
-
                 // This is not delayed, unlike ppu_regs.rendering_enabled()
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
                 let (mut sprite_pixel, priority, is_sprite_0, ppu_peek) = bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
+                let mut sprite_bank_pixel = None;
                 if rendering_enabled {
                     if !bus.ppu_regs.sprites_enabled() {
                         sprite_pixel = ColorT::Transparent;
@@ -251,19 +254,30 @@ impl Ppu {
 
                     let sprite_pixel = bus.composite_decoder().decode_to_rgbt(sprite_pixel, emphasis);
 
-                    let bank_pixel = if sprite_pixel.is_transparent() {
+                    sprite_bank_pixel = Some(if sprite_pixel.is_transparent() {
                         Rgbt::Transparent
                     } else {
                         let rgb = bus.ppu.bank_color_assigner.rgb_for_source(ppu_peek.source());
                         Rgbt::Opaque(rgb)
-                    };
+                    });
 
                     frame.set_sprite_pixel(pixel_column, pixel_row, sprite_pixel, priority, is_sprite_0);
-                    bus.ppu.pattern_source_frame.set_sprite_pixel(pixel_column, pixel_row, bank_pixel, priority, false);
 
                     if frame.set_pixel(bus.ppu_regs.mask(), pixel_column, pixel_row).hit() {
                         bus.ppu_regs.sprite0_hit_pending = true;
                     }
+                }
+
+                let bank_pixel = match (background_bank_pixel, sprite_bank_pixel) {
+                    (None      , None)                    => None,
+                    (background, None)                    => background,
+                    (None      , sprite)                  => sprite,
+                    (background, Some(Rgbt::Transparent)) => background,
+                    // Give sprites higher priority for now, ignoring that it maybe be behind the background.
+                    (_         , sprite)                  => sprite,
+                };
+                if let Some(bank_pixel) = bank_pixel {
+                    bus.ppu.pattern_source_debug_buffer.write_rgbt(pixel_column.to_usize(), pixel_row.to_usize(), bank_pixel);
                 }
             }
 
@@ -406,8 +420,8 @@ impl Ppu {
         }
     }
 
-    pub fn pattern_source_frame(&self) -> &Frame {
-        &self.pattern_source_frame
+    pub fn pattern_source_debug_buffer(&self) -> &DebugBuffer<{PixelColumn::COLUMN_COUNT}, {PixelRow::ROW_COUNT}> {
+        &self.pattern_source_debug_buffer
     }
 
     fn current_sprite_pattern_address(&self, bus: &Bus, select_high: bool) -> (PpuAddress, bool) {

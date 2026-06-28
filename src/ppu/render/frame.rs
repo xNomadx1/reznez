@@ -321,7 +321,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
         self.buffer[row][column] = Rgbt::Opaque(rgb);
     }
 
-    fn write_rgbt(&mut self, column: usize, row: usize, rgbt: Rgbt) {
+    pub fn write_rgbt(&mut self, column: usize, row: usize, rgbt: Rgbt) {
         self.buffer[row][column] = rgbt;
     }
 }
