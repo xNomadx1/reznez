@@ -44,7 +44,7 @@ impl CompositeDecoder for NtscFloatDecoder {
 #[allow(dead_code)]
 impl NtscFloatDecoder {
     fn set_pixel_signal_levels(&mut self, clock: &MasterClock, color: Color, emphasis: Emphasis) {
-        let column = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap().to_column_row().0;
+        let column = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap().column;
         let phase = 8 * clock.ppu_clock().total_cycles();
         for p in 0..8 {
             let mut signal = self.signal(phase + p, color, emphasis);

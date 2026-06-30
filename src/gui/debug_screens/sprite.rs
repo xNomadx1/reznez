@@ -4,7 +4,7 @@ use num_traits::FromPrimitive;
 use crate::memory::regions::palette_ram::PaletteRam;
 use crate::ppu::palette::color_t::ColorT;
 use crate::gui::debug_screens::pattern_table::{PatternTable, Tile};
-use crate::ppu::pixel_index::{ColumnInTile, PixelColumn, PixelRow, RowInTile};
+use crate::ppu::pixel_index::{ColumnInTile, PixelColumn, PixelIndex, PixelRow, RowInTile};
 use crate::ppu::render::frame::Frame;
 use crate::ppu::sprite::sprite_attributes::{SpriteAttributes, Priority};
 use crate::ppu::sprite::sprite_half::SpriteHalf;
@@ -102,8 +102,7 @@ impl Sprite {
             let column_in_sprite = ColumnInTile::from_usize(column_in_sprite).unwrap();
             if let ColorT::Opaque(_) = pixel && let Some(column) = self.x_coordinate.add_column_in_tile(column_in_sprite) {
                 frame.set_sprite_pixel(
-                    column,
-                    row,
+                    PixelIndex { column, row },
                     pixel,
                     self.priority(),
                     is_sprite_0,

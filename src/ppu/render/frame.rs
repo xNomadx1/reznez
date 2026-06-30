@@ -53,7 +53,9 @@ impl Frame {
         &mut self.show_overscan
     }
 
-    pub fn set_pixel(&mut self, mask: Mask, column: PixelColumn, row: PixelRow) -> Sprite0Hit {
+    pub fn set_pixel(&mut self, mask: Mask, index: PixelIndex) -> Sprite0Hit {
+        let PixelIndex { column, row } = index;
+
         use ColorT::{Opaque, Transparent};
         let mut background_pixel = self.background_buffer[(column, row)];
         if !mask.left_background_columns_enabled() && column.is_in_left_margin() {
@@ -87,8 +89,8 @@ impl Frame {
         if sprite0_hit { Sprite0Hit::Hit } else { Sprite0Hit::Miss }
     }
 
-    pub fn pixel(&self, column: PixelColumn, row: PixelRow) -> (Color, Emphasis, bool) {
-        self.buffer[(column, row)]
+    pub fn pixel(&self, index: PixelIndex) -> (Color, Emphasis, bool) {
+        self.buffer[(index.column, index.row)]
     }
 
     pub fn set_backdrop_color(&mut self, color: Color, emphasis: Emphasis) {
@@ -97,26 +99,24 @@ impl Frame {
     }
 
     #[inline]
-    pub fn set_background_pixel(&mut self, pixel_column: PixelColumn, pixel_row: PixelRow, color: ColorT) {
-        self.background_buffer[(pixel_column, pixel_row)] = color;
+    pub fn set_background_pixel(&mut self, index: PixelIndex, color: ColorT) {
+        self.background_buffer[(index.column, index.row)] = color;
     }
 
     #[inline]
     pub fn set_sprite_pixel(
         &mut self,
-        column: PixelColumn,
-        row: PixelRow,
+        index: PixelIndex,
         color: ColorT,
         priority: Priority,
         is_sprite_0: bool,
     ) {
-        self.sprite_buffer[(column, row)] = (color, priority, is_sprite_0);
+        self.sprite_buffer[(index.column, index.row)] = (color, priority, is_sprite_0);
     }
 
     pub fn write_all_pixel_data(&self, decoder: &dyn CompositeDecoder, data: &mut [u8]) {
         for pixel_index in PixelIndex::iter() {
-            let (column, row) = pixel_index.to_column_row();
-            let (color, emphasis, _visible) = self.pixel(column, row);
+            let (color, emphasis, _visible) = self.pixel(pixel_index);
             let pixel = decoder.decode_to_rgb(color, emphasis);
 
             let index = 3 * pixel_index.to_usize();
@@ -128,8 +128,7 @@ impl Frame {
 
     pub fn copy_to_rgba_buffer(&self, decoder: &dyn CompositeDecoder, buffer: &mut [u8; 4 * PixelIndex::PIXEL_COUNT]) {
         for pixel_index in PixelIndex::iter() {
-            let (column, row) = pixel_index.to_column_row();
-            let (color, emphasis, visible) = self.pixel(column, row);
+            let (color, emphasis, visible) = self.pixel(pixel_index);
             let mut pixel = decoder.decode_to_rgb(color, emphasis);
             if !visible {
                 pixel = Rgb::BLACK;
@@ -220,13 +219,12 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
     }
 
     pub fn place_frame(&mut self, decoder: &dyn CompositeDecoder, left_column: usize, top_row: usize, frame: &Frame) {
-        for pixel_index in PixelIndex::iter() {
-            let (column, row) = pixel_index.to_column_row();
-            let (color, emphasis, _visible) = frame.pixel(column, row);
+        for index in PixelIndex::iter() {
+            let (color, emphasis, _visible) = frame.pixel(index);
             let pixel = decoder.decode_to_rgb(color, emphasis);
             self.write(
-                left_column + column.to_usize(),
-                top_row + row.to_usize(),
+                left_column + index.column.to_usize(),
+                top_row + index.row.to_usize(),
                 pixel,
             );
         }

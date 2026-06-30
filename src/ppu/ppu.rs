@@ -212,7 +212,7 @@ impl Ppu {
             }
             SetPixel => {
                 let clock = bus.ppu_clock();
-                let (pixel_column, pixel_row) = PixelIndex::try_from_clock(clock).unwrap().to_column_row();
+                let pixel_index = PixelIndex::try_from_clock(clock).unwrap();
 
                 let mut background_pixel = ColorT::Transparent;
                 let mut background_bank_pixel = None;
@@ -234,10 +234,9 @@ impl Ppu {
                         let rgb = bus.ppu.bank_color_assigner.rgb_for_source(bus.ppu.pattern_register.current_peek().source());
                         Rgbt::Opaque(rgb)
                     });
-
                 }
 
-                frame.set_background_pixel(pixel_column, pixel_row, background_pixel);
+                frame.set_background_pixel(pixel_index, background_pixel);
 
                 // This is not delayed, unlike ppu_regs.rendering_enabled()
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
@@ -255,9 +254,9 @@ impl Ppu {
                         Rgbt::Opaque(rgb)
                     });
 
-                    frame.set_sprite_pixel(pixel_column, pixel_row, sprite_pixel, priority, is_sprite_0);
+                    frame.set_sprite_pixel(pixel_index, sprite_pixel, priority, is_sprite_0);
 
-                    if frame.set_pixel(bus.ppu_regs.mask(), pixel_column, pixel_row).hit() {
+                    if frame.set_pixel(bus.ppu_regs.mask(), pixel_index).hit() {
                         bus.ppu_regs.sprite0_hit_pending = true;
                     }
                 }
@@ -271,7 +270,9 @@ impl Ppu {
                     (_         , sprite)                  => sprite,
                 };
                 if let Some(bank_pixel) = bank_pixel {
-                    bus.ppu.pattern_source_debug_buffer.write_rgbt(pixel_column.to_usize(), pixel_row.to_usize(), bank_pixel);
+                    let column = pixel_index.column.to_usize();
+                    let row = pixel_index.row.to_usize();
+                    bus.ppu.pattern_source_debug_buffer.write_rgbt(column, row, bank_pixel);
                 }
             }
 

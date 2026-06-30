@@ -8,7 +8,7 @@ use crate::ppu::name_table::background_tile_index::BackgroundTileIndex;
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::palette_table_index::PaletteTableIndex;
 use crate::gui::debug_screens::pattern_table::PatternTable;
-use crate::ppu::pixel_index::{PixelColumn, PixelRow};
+use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
 use crate::ppu::render::frame::Frame;
 use crate::ppu::tile_number::TileNumber;
 
@@ -48,17 +48,16 @@ impl<'a> NameTable<'a> {
     #[allow(clippy::too_many_arguments)]
     fn render_scanline(
         &self,
-        pixel_row: PixelRow,
+        row: PixelRow,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
         x_scroll: XScroll,
         y_scroll: YScroll,
         frame: &mut Frame,
     ) {
-        for pixel_column in PixelColumn::iter() {
+        for column in PixelColumn::iter() {
             self.render_pixel(
-                pixel_column,
-                pixel_row,
+                PixelIndex { column, row },
                 pattern_table,
                 palette_ram,
                 x_scroll,
@@ -71,16 +70,15 @@ impl<'a> NameTable<'a> {
     #[allow(clippy::too_many_arguments)]
     fn render_pixel(
         &self,
-        pixel_column: PixelColumn,
-        pixel_row: PixelRow,
+        pixel_index: PixelIndex,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
         x_scroll: XScroll,
         y_scroll: YScroll,
         frame: &mut Frame,
     ) {
-        let (tile_column, column_in_tile) = x_scroll.tile_column(pixel_column);
-        let (tile_row, row_in_tile) = y_scroll.tile_row(pixel_row);
+        let (tile_column, column_in_tile) = x_scroll.tile_column(pixel_index.column);
+        let (tile_row, row_in_tile) = y_scroll.tile_row(pixel_index.row);
         let background_tile_index = BackgroundTileIndex::from_tile_column_row(tile_column, tile_row);
 
         let (tile_number, palette_table_index) = self.tile_entry_at(background_tile_index);
@@ -91,11 +89,7 @@ impl<'a> NameTable<'a> {
             palette_ram.background_palette(palette_table_index),
             &mut tile_sliver,
         );
-        frame.set_background_pixel(
-            pixel_column,
-            pixel_row,
-            tile_sliver[column_in_tile as usize],
-        );
+        frame.set_background_pixel(pixel_index, tile_sliver[column_in_tile as usize]);
     }
 
     #[inline]

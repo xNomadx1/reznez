@@ -11,8 +11,8 @@ use crate::ppu::ppu_clock::PpuClock;
 
 #[derive(Clone, Copy)]
 pub struct PixelIndex {
-    column: PixelColumn,
-    row: PixelRow,
+    pub column: PixelColumn,
+    pub row: PixelRow,
 }
 
 impl PixelIndex {
@@ -24,10 +24,6 @@ impl PixelIndex {
 
     pub fn try_from_clock(clock: &PpuClock) -> Option<PixelIndex> {
         PixelIndex::try_from_scanline_cycle(clock.scanline(), clock.cycle())
-    }
-
-    pub fn to_column_row(self) -> (PixelColumn, PixelRow) {
-        (self.column, self.row)
     }
 
     pub fn to_usize(self) -> usize {
