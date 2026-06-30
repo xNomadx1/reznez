@@ -36,10 +36,10 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixels:
 
     nes.process_gui_events(&events);
     nes.step_frame();
-    nes.frame().copy_to_rgba_buffer(nes.bus().composite_decoder(), pixels.frame_mut().try_into().unwrap());
+    nes.frame().copy_to_rgba_buffer(nes.bus().composite_decoders.get(), pixels.frame_mut().try_into().unwrap());
 
     if config.frame_dump {
-        dump_frame(nes.frame(), nes.bus().composite_decoder(), frame_index);
+        dump_frame(nes.frame(), nes.bus().composite_decoders.get(), frame_index);
     }
 
     log::logger().flush();

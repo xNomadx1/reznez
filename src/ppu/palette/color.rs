@@ -21,6 +21,14 @@ impl Color {
         Self { hue: Hue::Gray, brightness: self.brightness }
     }
 
+    pub fn brightness(self) -> Brightness {
+        self.brightness
+    }
+
+    pub fn hue(self) -> Hue {
+        self.hue
+    }
+
     pub fn to_u6(self) -> u6 {
         u6::new(combinebits!(self.brightness as u8, self.hue as u8, "00bb hhhh"))
     }

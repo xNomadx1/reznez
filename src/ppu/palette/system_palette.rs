@@ -1,6 +1,7 @@
 use enum_iterator::all;
 use num_traits::FromPrimitive;
 
+use crate::master_clock::MasterClock;
 use crate::ppu::palette::color::{Brightness, Color, Hue};
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
@@ -105,7 +106,7 @@ impl SystemPalette {
 }
 
 impl CompositeDecoder for SystemPalette {
-    fn start_scanline(&mut self, _clock: &crate::master_clock::MasterClock) {
+    fn start_scanline(&mut self, _clock: &MasterClock) {
         // Do nothing. Flat decoding doesn't care about clock phase.
     }
 

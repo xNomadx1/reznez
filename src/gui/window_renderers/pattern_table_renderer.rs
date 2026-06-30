@@ -60,7 +60,7 @@ impl WindowRenderer for PatternTableRenderer {
                     &mut self.tile,
                 );
                 self.buffer.place_tile(
-                    bus.composite_decoder(),
+                    bus.composite_decoders.get(),
                     (8 + 1) * (index as usize % 16) + offset,
                     (8 + 1) * (index as usize / 16) + TOP_MENU_BAR_HEIGHT / 3,
                     &self.tile,

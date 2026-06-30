@@ -58,16 +58,16 @@ impl WindowRenderer for NameTableRenderer {
 
         NameTable::new(bus.raw_name_table(NameTableQuadrant::TopLeft))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(bus.composite_decoder(), 1, 1, &self.frame);
+        self.buffer.place_frame(bus.composite_decoders.get(), 1, 1, &self.frame);
         NameTable::new(bus.raw_name_table(NameTableQuadrant::TopRight))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(bus.composite_decoder(), 257, 1, &self.frame);
+        self.buffer.place_frame(bus.composite_decoders.get(), 257, 1, &self.frame);
         NameTable::new(bus.raw_name_table(NameTableQuadrant::BottomLeft))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(bus.composite_decoder(), 1, 241, &self.frame);
+        self.buffer.place_frame(bus.composite_decoders.get(), 1, 241, &self.frame);
         NameTable::new(bus.raw_name_table(NameTableQuadrant::BottomRight))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(bus.composite_decoder(), 257, 241, &self.frame);
+        self.buffer.place_frame(bus.composite_decoders.get(), 257, 241, &self.frame);
 
         self.buffer.place_wrapping_horizontal_line(y, x, x + 257, Rgb::new(255, 0, 0));
         self.buffer.place_wrapping_horizontal_line(y + 241, x, x + 257, Rgb::new(255, 0, 0));

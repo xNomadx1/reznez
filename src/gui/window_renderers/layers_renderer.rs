@@ -39,7 +39,7 @@ impl WindowRenderer for LayersRenderer {
             return;
         };
 
-        let decoder = nes.bus().composite_decoder();
+        let decoder = nes.bus().composite_decoders.get();
         self.buffer.place_frame(decoder, 0, TOP_MENU_BAR_HEIGHT, nes.frame());
         self.buffer.place_frame(
             decoder,

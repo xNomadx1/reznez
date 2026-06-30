@@ -10,3 +10,4 @@ pub mod rgb;
 pub mod rgbt;
 pub mod system_palette;
 pub mod util;
+pub mod yuv;

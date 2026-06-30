@@ -77,9 +77,7 @@ pub struct Bus {
     pub name_table_mirrorings: &'static [NameTableMirroring], // TODO: Move into ChrMemory.
     pub dip_switch: u8,
 
-    pub use_ntsc_float_decoder: bool,
-    pub system_palette: SystemPalette,
-    pub ntsc_float_decoder: NtscFloatDecoder,
+    pub composite_decoders: CompositeDecoders,
 }
 
 impl Bus {
@@ -125,9 +123,11 @@ impl Bus {
             name_table_mirrorings,
             dip_switch,
 
-            use_ntsc_float_decoder: false,
-            system_palette,
-            ntsc_float_decoder: NtscFloatDecoder::new(),
+            composite_decoders: CompositeDecoders {
+                use_ntsc_float_decoder: false,
+                system_palette,
+                ntsc_float_decoder: NtscFloatDecoder::new(),
+            },
         }
     }
 
@@ -558,12 +558,28 @@ impl Bus {
     pub fn apu_registers_active(&self) -> bool {
         matches!(*self.cpu_pinout.address_bus, 0x4000..=0x401F)
     }
+}
 
-    pub fn composite_decoder(&self) -> &dyn CompositeDecoder {
+pub struct CompositeDecoders {
+    pub use_ntsc_float_decoder: bool,
+    system_palette: SystemPalette,
+    ntsc_float_decoder: NtscFloatDecoder,
+}
+
+impl CompositeDecoders {
+    pub fn get(&self) -> &dyn CompositeDecoder {
         if self.use_ntsc_float_decoder {
             &self.ntsc_float_decoder
         } else {
             &self.system_palette
+        }
+    }
+
+    pub fn get_mut(&mut self) -> &mut dyn CompositeDecoder {
+        if self.use_ntsc_float_decoder {
+            &mut self.ntsc_float_decoder
+        } else {
+            &mut self.system_palette
         }
     }
 }
