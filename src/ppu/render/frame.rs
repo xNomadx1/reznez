@@ -11,7 +11,7 @@ use crate::gui::debug_screens::pattern_table::Tile;
 use crate::ppu::pixel_index::{
     ColumnInTile, PixelColumn, PixelIndex, PixelRow, RowInTile,
 };
-use crate::ppu::register::ppu_registers::{Emphasis, Mask};
+use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::ppm::Ppm;
 use crate::ppu::sprite::sprite_attributes::Priority;
 
@@ -48,38 +48,8 @@ impl Frame {
         &mut self.show_overscan
     }
 
-    pub fn set_pixel(&mut self, mask: Mask, backdrop_color: Color, index: PixelIndex) -> Sprite0Hit {
-        let PixelIndex { column, row } = index;
-
-        use ColorT::{Opaque, Transparent};
-        let mut background_pixel = self.background_buffer[index];
-        if !mask.left_background_columns_enabled() && column.is_in_left_margin() {
-            background_pixel = Transparent;
-        }
-
-        let (mut sprite_pixel, sprite_priority, is_sprite0) = self.sprite_buffer[index];
-        if !mask.left_sprite_columns_enabled() && column.is_in_left_margin() {
-            sprite_pixel = Transparent;
-        }
-
-        let color = match (background_pixel, sprite_pixel, sprite_priority) {
-            (Transparent  , Transparent  , _) => backdrop_color,
-            (Transparent  , Opaque(color), _) => color,
-            (Opaque(color), Transparent  , _) => color,
-            (Opaque(_)    , Opaque(color), Priority::InFront) => color,
-            (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
-        };
-
-        self.buffer[index] = (color, mask.emphasis());
-
-        // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
-        let sprite0_hit =
-            is_sprite0 &&
-            column < PixelColumn::MAX &&
-            row <= PixelRow::MAX &&
-            background_pixel.is_opaque() &&
-            sprite_pixel.is_opaque();
-        if sprite0_hit { Sprite0Hit::Hit } else { Sprite0Hit::Miss }
+    pub fn set_pixel(&mut self, color: Color, emphasis: Emphasis, index: PixelIndex) {
+        self.buffer[index] = (color, emphasis);
     }
 
     pub fn pixel(&self, index: PixelIndex) -> (Color, Emphasis, bool) {
@@ -154,18 +124,6 @@ impl Frame {
         for column in PixelColumn::iter() {
             self.sprite_buffer[PixelIndex { column, row }] = (ColorT::Transparent, Priority::Behind, false);
         }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum Sprite0Hit {
-    Hit,
-    Miss,
-}
-
-impl Sprite0Hit {
-    pub fn hit(self) -> bool {
-        matches!(self, Sprite0Hit::Hit)
     }
 }
 

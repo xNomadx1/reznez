@@ -17,7 +17,7 @@ use crate::ppu::register::ppu_registers::Toggle;
 use crate::ppu::register::registers::attribute_register::AttributeRegister;
 use crate::ppu::register::registers::pattern_register::PatternRegister;
 use crate::ppu::render::frame::{DebugBuffer, Frame};
-use crate::ppu::sprite::sprite_attributes::SpriteAttributes;
+use crate::ppu::sprite::sprite_attributes::{Priority, SpriteAttributes};
 use crate::ppu::sprite::oam_registers::OamRegisters;
 use crate::ppu::sprite::sprite_y::SpriteY;
 use crate::ppu::sprite::sprite_height::SpriteHeight;
@@ -234,7 +234,8 @@ impl Ppu {
 
                 // This is not delayed, unlike ppu_regs.rendering_enabled()
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
-                let (mut sprite_pixel, priority, is_sprite_0, ppu_peek) = bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
+                let (mut sprite_pixel, sprite_priority, is_sprite_0, ppu_peek) =
+                    bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
                 let mut sprite_bank_pixel = None;
                 if rendering_enabled {
                     if !bus.ppu_regs.sprites_enabled() {
@@ -248,9 +249,37 @@ impl Ppu {
                         Rgbt::Opaque(rgb)
                     });
 
-                    frame.set_sprite_pixel(pixel_index, sprite_pixel, priority, is_sprite_0);
+                    frame.set_sprite_pixel(pixel_index, sprite_pixel, sprite_priority, is_sprite_0);
 
-                    if frame.set_pixel(bus.ppu_regs.mask(), bus.palette_ram.backdrop_color(), pixel_index).hit() {
+                    let PixelIndex { column, row } = pixel_index;
+
+                    use ColorT::{Opaque, Transparent};
+                    if !bus.ppu_regs.mask().left_background_columns_enabled() && column.is_in_left_margin() {
+                        background_pixel = Transparent;
+                    }
+
+                    if !bus.ppu_regs.mask().left_sprite_columns_enabled() && column.is_in_left_margin() {
+                        sprite_pixel = Transparent;
+                    }
+
+                    let color = match (background_pixel, sprite_pixel, sprite_priority) {
+                        (Transparent  , Transparent  , _) => bus.palette_ram.backdrop_color(),
+                        (Transparent  , Opaque(color), _) => color,
+                        (Opaque(color), Transparent  , _) => color,
+                        (Opaque(_)    , Opaque(color), Priority::InFront) => color,
+                        (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
+                    };
+
+                    frame.set_pixel(color, bus.ppu_regs.mask().emphasis(), pixel_index);
+
+                    // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
+                    let sprite_0_hit =
+                        is_sprite_0 &&
+                        column < PixelColumn::MAX &&
+                        row <= PixelRow::MAX &&
+                        background_pixel.is_opaque() &&
+                        sprite_pixel.is_opaque();
+                    if sprite_0_hit {
                         bus.ppu_regs.sprite0_hit_pending = true;
                     }
                 }
