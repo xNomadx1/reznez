@@ -57,12 +57,12 @@ impl Frame {
         let PixelIndex { column, row } = index;
 
         use ColorT::{Opaque, Transparent};
-        let mut background_pixel = self.background_buffer[(column, row)];
+        let mut background_pixel = self.background_buffer[index];
         if !mask.left_background_columns_enabled() && column.is_in_left_margin() {
             background_pixel = Transparent;
         }
 
-        let (mut sprite_pixel, sprite_priority, is_sprite0) = self.sprite_buffer[(column, row)];
+        let (mut sprite_pixel, sprite_priority, is_sprite0) = self.sprite_buffer[index];
         if !mask.left_sprite_columns_enabled() && column.is_in_left_margin() {
             sprite_pixel = Transparent;
         }
@@ -75,7 +75,7 @@ impl Frame {
             (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
         };
 
-        self.buffer[(column, row)] = (color, mask.emphasis());
+        self.buffer[index] = (color, mask.emphasis());
 
         // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
         let sprite0_hit =
@@ -89,7 +89,7 @@ impl Frame {
 
     pub fn pixel(&self, index: PixelIndex) -> (Color, Emphasis, bool) {
         let visible = self.show_overscan || !index.is_in_overscan_region();
-        let (color, emphasis) = self.buffer[(index.column, index.row)];
+        let (color, emphasis) = self.buffer[index];
         (color, emphasis, visible)
     }
 
@@ -100,7 +100,7 @@ impl Frame {
 
     #[inline]
     pub fn set_background_pixel(&mut self, index: PixelIndex, color: ColorT) {
-        self.background_buffer[(index.column, index.row)] = color;
+        self.background_buffer[index] = color;
     }
 
     #[inline]
@@ -111,7 +111,7 @@ impl Frame {
         priority: Priority,
         is_sprite_0: bool,
     ) {
-        self.sprite_buffer[(index.column, index.row)] = (color, priority, is_sprite_0);
+        self.sprite_buffer[index] = (color, priority, is_sprite_0);
     }
 
     pub fn write_all_pixel_data(&self, decoder: &dyn CompositeDecoder, data: &mut [u8]) {
@@ -163,7 +163,7 @@ impl Frame {
 
     pub fn clear_sprite_line(&mut self, row: PixelRow) {
         for column in PixelColumn::iter() {
-            self.sprite_buffer[(column, row)] = (ColorT::Transparent, Priority::Behind, false);
+            self.sprite_buffer[PixelIndex { column, row }] = (ColorT::Transparent, Priority::Behind, false);
         }
     }
 }
@@ -181,27 +181,25 @@ impl Sprite0Hit {
 }
 
 #[derive(Clone)]
-struct FrameBuffer<T>(Box<[[T; PixelColumn::COLUMN_COUNT]; PixelRow::ROW_COUNT]>);
+struct FrameBuffer<T>(Box<[T; PixelColumn::COLUMN_COUNT * PixelRow::ROW_COUNT]>);
 
 impl<T: Copy> FrameBuffer<T> {
     fn filled(value: T) -> FrameBuffer<T> {
-        FrameBuffer(Box::new(
-            [[value; PixelColumn::COLUMN_COUNT]; PixelRow::ROW_COUNT],
-        ))
+        FrameBuffer(Box::new([value; PixelColumn::COLUMN_COUNT * PixelRow::ROW_COUNT]))
     }
 }
 
-impl<T> Index<(PixelColumn, PixelRow)> for FrameBuffer<T> {
+impl<T> Index<PixelIndex> for FrameBuffer<T> {
     type Output = T;
 
-    fn index(&self, (column, row): (PixelColumn, PixelRow)) -> &T {
-        &self.0[row.to_usize()][column.to_usize()]
+    fn index(&self, index: PixelIndex) -> &T {
+        &self.0[index.to_usize()]
     }
 }
 
-impl<T> IndexMut<(PixelColumn, PixelRow)> for FrameBuffer<T> {
-    fn index_mut(&mut self, (column, row): (PixelColumn, PixelRow)) -> &mut T {
-        &mut self.0[row.to_usize()][column.to_usize()]
+impl<T> IndexMut<PixelIndex> for FrameBuffer<T> {
+    fn index_mut(&mut self, index: PixelIndex) -> &mut T {
+        &mut self.0[index.to_usize()]
     }
 }
 
