@@ -67,16 +67,15 @@ impl Frame {
             sprite_pixel = Transparent;
         }
 
-        use Priority::{Behind, InFront};
-        let rgb = match (background_pixel, sprite_pixel, sprite_priority) {
-            (Transparent, Transparent, _) => self.backdrop_color,
-            (Transparent, Opaque(rgb), _) => rgb,
-            (Opaque(rgb), Transparent, _) => rgb,
-            (Opaque(_)  , Opaque(rgb), InFront) => rgb,
-            (Opaque(rgb), Opaque(_)  , Behind ) => rgb,
+        let color = match (background_pixel, sprite_pixel, sprite_priority) {
+            (Transparent  , Transparent  , _) => self.backdrop_color,
+            (Transparent  , Opaque(color), _) => color,
+            (Opaque(color), Transparent  , _) => color,
+            (Opaque(_)    , Opaque(color), Priority::InFront) => color,
+            (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
         };
 
-        self.buffer[(column, row)] = (rgb, mask.emphasis());
+        self.buffer[(column, row)] = (color, mask.emphasis());
 
         // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
         let sprite0_hit =
