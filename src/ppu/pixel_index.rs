@@ -26,6 +26,10 @@ impl PixelIndex {
         PixelIndex::try_from_scanline_cycle(clock.scanline(), clock.cycle())
     }
 
+    pub fn is_in_overscan_region(self) -> bool {
+        self.column.is_in_overscan_region() || self.row.is_in_overscan_region()
+    }
+
     pub fn to_usize(self) -> usize {
         PixelColumn::COLUMN_COUNT * self.row.to_usize() + self.column.to_usize()
     }

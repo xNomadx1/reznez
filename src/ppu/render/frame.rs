@@ -17,7 +17,7 @@ use crate::ppu::sprite::sprite_attributes::Priority;
 
 #[derive(Clone)]
 pub struct Frame {
-    buffer: FrameBuffer<(Color, Emphasis, bool)>,
+    buffer: FrameBuffer<(Color, Emphasis)>,
 
     background_buffer: FrameBuffer<ColorT>,
     sprite_buffer: FrameBuffer<(ColorT, Priority, bool)>,
@@ -30,7 +30,7 @@ pub struct Frame {
 impl Frame {
     pub fn new() -> Self {
         Self {
-            buffer: FrameBuffer::filled((Color::BLACK, Emphasis::OFF, true)),
+            buffer: FrameBuffer::filled((Color::BLACK, Emphasis::OFF)),
 
             background_buffer: FrameBuffer::filled(ColorT::Transparent),
             sprite_buffer: FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false)),
@@ -76,8 +76,7 @@ impl Frame {
             (Opaque(rgb), Opaque(_)  , Behind ) => rgb,
         };
 
-        let visible = self.show_overscan || (!column.is_in_overscan_region() && !row.is_in_overscan_region());
-        self.buffer[(column, row)] = (rgb, mask.emphasis(), visible);
+        self.buffer[(column, row)] = (rgb, mask.emphasis());
 
         // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
         let sprite0_hit =
@@ -90,7 +89,9 @@ impl Frame {
     }
 
     pub fn pixel(&self, index: PixelIndex) -> (Color, Emphasis, bool) {
-        self.buffer[(index.column, index.row)]
+        let visible = self.show_overscan || !index.is_in_overscan_region();
+        let (color, emphasis) = self.buffer[(index.column, index.row)];
+        (color, emphasis, visible)
     }
 
     pub fn set_backdrop_color(&mut self, color: Color, emphasis: Emphasis) {
@@ -155,7 +156,7 @@ impl Frame {
     // Used for debug windows only
     pub fn clear(&mut self) {
         // FIXME: Don't allocate new FrameBuffers to do this.
-        self.buffer = FrameBuffer::filled((Color::BLACK, Emphasis::OFF, true));
+        self.buffer = FrameBuffer::filled((Color::BLACK, Emphasis::OFF));
         self.background_buffer = FrameBuffer::filled(ColorT::Transparent);
         self.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false));
         self.backdrop_color = Color::BLACK;
