@@ -53,7 +53,6 @@ impl WindowRenderer for NameTableRenderer {
         self.buffer.place_wrapping_vertical_line(0, 0, height, Rgb::new(255, 255, 255));
         self.buffer.place_wrapping_vertical_line(width, 0, height, Rgb::new(255, 255, 255));
 
-        self.frame.set_backdrop_color(bus.palette_ram().backdrop_color(), bus.ppu_regs.mask().emphasis());
         let background_table = PatternTable::background_side(bus);
 
         NameTable::new(bus.raw_name_table(NameTableQuadrant::TopLeft))

@@ -156,8 +156,6 @@ impl Ppu {
     }
 
     fn execute_cycle_action(bus: &mut Bus, mapper: &mut dyn Mapper, frame: &mut Frame, cycle_action: CycleAction) {
-        let emphasis = bus.ppu_regs.mask().emphasis();
-
         use CycleAction::*;
         match cycle_action {
             SetPatternIndexAddress => {
@@ -217,10 +215,6 @@ impl Ppu {
                 let mut background_pixel = ColorT::Transparent;
                 let mut background_bank_pixel = None;
                 if bus.ppu_regs.background_enabled() {
-                    // TODO: Figure out where this goes.
-                    let ubc = bus.palette_ram().backdrop_color();
-                    frame.set_backdrop_color(ubc, emphasis);
-
                     let column_in_tile = bus.ppu_regs.fine_x_scroll;
                     let palette_table_index = bus.ppu.attribute_register.palette_table_index(column_in_tile);
                     let palette = bus.palette_ram().background_palette(palette_table_index);
@@ -256,7 +250,7 @@ impl Ppu {
 
                     frame.set_sprite_pixel(pixel_index, sprite_pixel, priority, is_sprite_0);
 
-                    if frame.set_pixel(bus.ppu_regs.mask(), pixel_index).hit() {
+                    if frame.set_pixel(bus.ppu_regs.mask(), bus.palette_ram.backdrop_color(), pixel_index).hit() {
                         bus.ppu_regs.sprite0_hit_pending = true;
                     }
                 }

@@ -21,8 +21,6 @@ pub struct Frame {
 
     background_buffer: FrameBuffer<ColorT>,
     sprite_buffer: FrameBuffer<(ColorT, Priority, bool)>,
-    backdrop_color: Color,
-    backdrop_emphasis: Emphasis,
 
     show_overscan: bool,
 }
@@ -34,8 +32,6 @@ impl Frame {
 
             background_buffer: FrameBuffer::filled(ColorT::Transparent),
             sprite_buffer: FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false)),
-            backdrop_color: Color::BLACK,
-            backdrop_emphasis: Emphasis::OFF,
 
             show_overscan: false,
         }
@@ -45,7 +41,6 @@ impl Frame {
     pub fn to_background_only(&self) -> Self {
         let mut frame = self.clone();
         frame.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false));
-        frame.backdrop_color = Color::BLACK;
         frame
     }
 
@@ -53,7 +48,7 @@ impl Frame {
         &mut self.show_overscan
     }
 
-    pub fn set_pixel(&mut self, mask: Mask, index: PixelIndex) -> Sprite0Hit {
+    pub fn set_pixel(&mut self, mask: Mask, backdrop_color: Color, index: PixelIndex) -> Sprite0Hit {
         let PixelIndex { column, row } = index;
 
         use ColorT::{Opaque, Transparent};
@@ -68,7 +63,7 @@ impl Frame {
         }
 
         let color = match (background_pixel, sprite_pixel, sprite_priority) {
-            (Transparent  , Transparent  , _) => self.backdrop_color,
+            (Transparent  , Transparent  , _) => backdrop_color,
             (Transparent  , Opaque(color), _) => color,
             (Opaque(color), Transparent  , _) => color,
             (Opaque(_)    , Opaque(color), Priority::InFront) => color,
@@ -91,11 +86,6 @@ impl Frame {
         let visible = self.show_overscan || !index.is_in_overscan_region();
         let (color, emphasis) = self.buffer[index];
         (color, emphasis, visible)
-    }
-
-    pub fn set_backdrop_color(&mut self, color: Color, emphasis: Emphasis) {
-        self.backdrop_color = color;
-        self.backdrop_emphasis = emphasis;
     }
 
     #[inline]
@@ -158,7 +148,6 @@ impl Frame {
         self.buffer = FrameBuffer::filled((Color::BLACK, Emphasis::OFF));
         self.background_buffer = FrameBuffer::filled(ColorT::Transparent);
         self.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false));
-        self.backdrop_color = Color::BLACK;
     }
 
     pub fn clear_sprite_line(&mut self, row: PixelRow) {
