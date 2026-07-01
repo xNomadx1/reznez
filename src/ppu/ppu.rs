@@ -236,29 +236,22 @@ impl Ppu {
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
                 let (mut sprite_pixel, sprite_priority, is_sprite_0, ppu_peek) =
                     bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
-                let mut sprite_bank_pixel = None;
                 if rendering_enabled {
                     if !bus.ppu_regs.sprites_enabled() {
                         sprite_pixel = ColorT::Transparent;
                     }
 
-                    sprite_bank_pixel = Some(if sprite_pixel.is_transparent() {
-                        Rgbt::Transparent
-                    } else {
-                        let rgb = bus.ppu.bank_color_assigner.rgb_for_source(ppu_peek.source());
-                        Rgbt::Opaque(rgb)
-                    });
-
                     frame.set_sprite_pixel(pixel_index, sprite_pixel, sprite_priority, is_sprite_0);
 
                     let PixelIndex { column, row } = pixel_index;
 
+                    let ppumask = bus.ppu_regs.mask();
                     use ColorT::{Opaque, Transparent};
-                    if !bus.ppu_regs.mask().left_background_columns_enabled() && column.is_in_left_margin() {
+                    if !ppumask.left_background_columns_enabled() && column.is_in_left_margin() {
                         background_pixel = Transparent;
                     }
 
-                    if !bus.ppu_regs.mask().left_sprite_columns_enabled() && column.is_in_left_margin() {
+                    if !ppumask.left_sprite_columns_enabled() && column.is_in_left_margin() {
                         sprite_pixel = Transparent;
                     }
 
@@ -270,7 +263,7 @@ impl Ppu {
                         (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
                     };
 
-                    frame.set_pixel(color, bus.ppu_regs.mask().emphasis(), pixel_index);
+                    frame.set_pixel(color, ppumask.emphasis(), pixel_index);
 
                     // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
                     let sprite_0_hit =
@@ -282,20 +275,21 @@ impl Ppu {
                     if sprite_0_hit {
                         bus.ppu_regs.sprite0_hit_pending = true;
                     }
-                }
 
-                let bank_pixel = match (background_bank_pixel, sprite_bank_pixel) {
-                    (None      , None)                    => None,
-                    (background, None)                    => background,
-                    (None      , sprite)                  => sprite,
-                    (background, Some(Rgbt::Transparent)) => background,
-                    // Give sprites higher priority for now, ignoring that it maybe be behind the background.
-                    (_         , sprite)                  => sprite,
-                };
-                if let Some(bank_pixel) = bank_pixel {
-                    let column = pixel_index.column.to_usize();
-                    let row = pixel_index.row.to_usize();
-                    bus.ppu.pattern_source_debug_buffer.write_rgbt(column, row, bank_pixel);
+                    let sprite_bank_pixel = Some(if sprite_pixel.is_transparent() {
+                        Rgbt::Transparent
+                    } else {
+                        let rgb = bus.ppu.bank_color_assigner.rgb_for_source(ppu_peek.source());
+                        Rgbt::Opaque(rgb)
+                    });
+                    let is_sprite_pixel = background_pixel.is_transparent()
+                        || (sprite_pixel.is_opaque() && sprite_priority == Priority::InFront);
+                    let bank_pixel = if is_sprite_pixel { sprite_bank_pixel } else { background_bank_pixel };
+                    if let Some(bank_pixel) = bank_pixel {
+                        let column = pixel_index.column.to_usize();
+                        let row = pixel_index.row.to_usize();
+                        bus.ppu.pattern_source_debug_buffer.write_rgbt(column, row, bank_pixel);
+                    }
                 }
             }
 
