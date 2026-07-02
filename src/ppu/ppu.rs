@@ -212,17 +212,17 @@ impl Ppu {
                 let clock = bus.ppu_clock();
                 let pixel_index = PixelIndex::try_from_clock(clock).unwrap();
 
-                let mut background_pixel = ColorT::Transparent;
+                let mut background_color = ColorT::Transparent;
                 let mut background_bank_pixel = None;
                 if bus.ppu_regs.background_enabled() {
                     let column_in_tile = bus.ppu_regs.fine_x_scroll;
                     let palette_table_index = bus.ppu.attribute_register.palette_table_index(column_in_tile);
                     let palette = bus.palette_ram().background_palette(palette_table_index);
 
-                    background_pixel = bus.ppu.pattern_register
+                    background_color = bus.ppu.pattern_register
                         .palette_index(column_in_tile)
                         .map_or(ColorT::Transparent, |palette_index| ColorT::Opaque(palette[palette_index]));
-                    background_bank_pixel = Some(if background_pixel.is_transparent() {
+                    background_bank_pixel = Some(if background_color.is_transparent() {
                         Rgbt::Transparent
                     } else {
                         let rgb = bus.ppu.bank_color_assigner.rgb_for_source(bus.ppu.pattern_register.current_peek().source());
@@ -230,32 +230,28 @@ impl Ppu {
                     });
                 }
 
-                frame.set_background_pixel(pixel_index, background_pixel);
-
                 // This is not delayed, unlike ppu_regs.rendering_enabled()
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
-                let (mut sprite_pixel, sprite_priority, is_sprite_0, ppu_peek) =
+                let (mut sprite_color, sprite_priority, is_sprite_0, ppu_peek) =
                     bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
                 if rendering_enabled {
                     if !bus.ppu_regs.sprites_enabled() {
-                        sprite_pixel = ColorT::Transparent;
+                        sprite_color = ColorT::Transparent;
                     }
-
-                    frame.set_sprite_pixel(pixel_index, sprite_pixel, sprite_priority, is_sprite_0);
 
                     let PixelIndex { column, row } = pixel_index;
 
                     let ppumask = bus.ppu_regs.mask();
                     use ColorT::{Opaque, Transparent};
                     if !ppumask.left_background_columns_enabled() && column.is_in_left_margin() {
-                        background_pixel = Transparent;
+                        background_color = Transparent;
                     }
 
                     if !ppumask.left_sprite_columns_enabled() && column.is_in_left_margin() {
-                        sprite_pixel = Transparent;
+                        sprite_color = Transparent;
                     }
 
-                    let color = match (background_pixel, sprite_pixel, sprite_priority) {
+                    let color = match (background_color, sprite_color, sprite_priority) {
                         (Transparent  , Transparent  , _) => bus.palette_ram.backdrop_color(),
                         (Transparent  , Opaque(color), _) => color,
                         (Opaque(color), Transparent  , _) => color,
@@ -263,27 +259,30 @@ impl Ppu {
                         (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
                     };
 
-                    frame.set_pixel(color, ppumask.emphasis(), pixel_index);
+                    frame.set_pixel(pixel_index, color, ppumask.emphasis());
+                    // These two are just for debug screens.
+                    frame.set_background_pixel(pixel_index, background_color);
+                    frame.set_sprite_pixel(pixel_index, sprite_color, sprite_priority);
 
                     // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
                     let sprite_0_hit =
                         is_sprite_0 &&
                         column < PixelColumn::MAX &&
                         row <= PixelRow::MAX &&
-                        background_pixel.is_opaque() &&
-                        sprite_pixel.is_opaque();
+                        background_color.is_opaque() &&
+                        sprite_color.is_opaque();
                     if sprite_0_hit {
                         bus.ppu_regs.sprite0_hit_pending = true;
                     }
 
-                    let sprite_bank_pixel = Some(if sprite_pixel.is_transparent() {
+                    let sprite_bank_pixel = Some(if sprite_color.is_transparent() {
                         Rgbt::Transparent
                     } else {
                         let rgb = bus.ppu.bank_color_assigner.rgb_for_source(ppu_peek.source());
                         Rgbt::Opaque(rgb)
                     });
-                    let is_sprite_pixel = background_pixel.is_transparent()
-                        || (sprite_pixel.is_opaque() && sprite_priority == Priority::InFront);
+                    let is_sprite_pixel = background_color.is_transparent()
+                        || (sprite_color.is_opaque() && sprite_priority == Priority::InFront);
                     let bank_pixel = if is_sprite_pixel { sprite_bank_pixel } else { background_bank_pixel };
                     if let Some(bank_pixel) = bank_pixel {
                         let column = pixel_index.column.to_usize();

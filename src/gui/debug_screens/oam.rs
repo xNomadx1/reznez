@@ -83,7 +83,6 @@ impl Oam {
         let sprites = self.sprites();
         // Lower index sprites are drawn on top of higher index sprites.
         for i in (0..sprites.len()).rev() {
-            let is_sprite_0 = i == 0;
             let sprite = sprites[i];
             if sprite_height == SpriteHeight::Tall {
                 pattern_table = PatternTable::from_mem(bus, sprite.tile_number().tall_sprite_pattern_table_side());
@@ -94,7 +93,6 @@ impl Oam {
                 sprite_height,
                 &pattern_table,
                 bus.palette_ram(),
-                is_sprite_0,
                 frame,
             );
         }

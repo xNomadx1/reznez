@@ -20,7 +20,7 @@ pub struct Frame {
     buffer: FrameBuffer<(Color, Emphasis)>,
 
     background_buffer: FrameBuffer<ColorT>,
-    sprite_buffer: FrameBuffer<(ColorT, Priority, bool)>,
+    sprite_buffer: FrameBuffer<(ColorT, Priority)>,
 
     show_overscan: bool,
 }
@@ -31,7 +31,7 @@ impl Frame {
             buffer: FrameBuffer::filled((Color::BLACK, Emphasis::OFF)),
 
             background_buffer: FrameBuffer::filled(ColorT::Transparent),
-            sprite_buffer: FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false)),
+            sprite_buffer: FrameBuffer::filled((ColorT::Transparent, Priority::Behind)),
 
             show_overscan: false,
         }
@@ -40,7 +40,7 @@ impl Frame {
     // Only used for debug windows.
     pub fn to_background_only(&self) -> Self {
         let mut frame = self.clone();
-        frame.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false));
+        frame.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind));
         frame
     }
 
@@ -48,30 +48,22 @@ impl Frame {
         &mut self.show_overscan
     }
 
-    pub fn set_pixel(&mut self, color: Color, emphasis: Emphasis, index: PixelIndex) {
-        self.buffer[index] = (color, emphasis);
+    pub fn set_pixel(&mut self, pixel_index: PixelIndex, color: Color, emphasis: Emphasis) {
+        self.buffer[pixel_index] = (color, emphasis);
+    }
+
+    pub fn set_background_pixel(&mut self, pixel_index: PixelIndex, color: ColorT) {
+        self.background_buffer[pixel_index] = color;
+    }
+
+    pub fn set_sprite_pixel(&mut self, pixel_index: PixelIndex, color: ColorT, priority: Priority) {
+        self.sprite_buffer[pixel_index] = (color, priority);
     }
 
     pub fn pixel(&self, index: PixelIndex) -> (Color, Emphasis, bool) {
         let visible = self.show_overscan || !index.is_in_overscan_region();
         let (color, emphasis) = self.buffer[index];
         (color, emphasis, visible)
-    }
-
-    #[inline]
-    pub fn set_background_pixel(&mut self, index: PixelIndex, color: ColorT) {
-        self.background_buffer[index] = color;
-    }
-
-    #[inline]
-    pub fn set_sprite_pixel(
-        &mut self,
-        index: PixelIndex,
-        color: ColorT,
-        priority: Priority,
-        is_sprite_0: bool,
-    ) {
-        self.sprite_buffer[index] = (color, priority, is_sprite_0);
     }
 
     pub fn write_all_pixel_data(&self, decoder: &dyn CompositeDecoder, data: &mut [u8]) {
@@ -117,12 +109,12 @@ impl Frame {
         // FIXME: Don't allocate new FrameBuffers to do this.
         self.buffer = FrameBuffer::filled((Color::BLACK, Emphasis::OFF));
         self.background_buffer = FrameBuffer::filled(ColorT::Transparent);
-        self.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind, false));
+        self.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind));
     }
 
     pub fn clear_sprite_line(&mut self, row: PixelRow) {
         for column in PixelColumn::iter() {
-            self.sprite_buffer[PixelIndex { column, row }] = (ColorT::Transparent, Priority::Behind, false);
+            self.sprite_buffer[PixelIndex { column, row }] = (ColorT::Transparent, Priority::Behind);
         }
     }
 }

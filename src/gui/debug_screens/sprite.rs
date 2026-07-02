@@ -79,7 +79,6 @@ impl Sprite {
         sprite_height: SpriteHeight,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
-        is_sprite_0: bool,
         frame: &mut Frame,
     ) {
         let Some((sprite_half, row_in_half, _visible)) =
@@ -98,15 +97,11 @@ impl Sprite {
             &mut sprite_sliver,
         );
 
-        for (column_in_sprite, &pixel) in sprite_sliver.iter().enumerate() {
+        for (column_in_sprite, &color) in sprite_sliver.iter().enumerate() {
             let column_in_sprite = ColumnInTile::from_usize(column_in_sprite).unwrap();
-            if let ColorT::Opaque(_) = pixel && let Some(column) = self.x_coordinate.add_column_in_tile(column_in_sprite) {
-                frame.set_sprite_pixel(
-                    PixelIndex { column, row },
-                    pixel,
-                    self.priority(),
-                    is_sprite_0,
-                );
+            if let ColorT::Opaque(_) = color && let Some(column) = self.x_coordinate.add_column_in_tile(column_in_sprite) {
+                let index = PixelIndex { column, row };
+                frame.set_sprite_pixel(index, color, self.priority());
             }
         }
     }
