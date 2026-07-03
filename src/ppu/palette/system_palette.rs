@@ -110,7 +110,8 @@ impl SystemPalette {
 impl CompositeDecoder for SystemPalette {
     fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
         let index = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap();
-        frame.set_pixel(index, color, emphasis);
+        let rgb = self.lookup_rgb(color, emphasis);
+        frame.set_pixel(index, rgb);
     }
 
     fn decode_to_rgb(&self, color: Color, emphasis: Emphasis) -> Rgb {

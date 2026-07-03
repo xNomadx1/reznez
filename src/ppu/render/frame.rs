@@ -2,7 +2,6 @@ use std::ops::{Index, IndexMut};
 
 use enum_iterator::all;
 
-use crate::ppu::palette::color::Color;
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::rgb::Rgb;
@@ -17,7 +16,7 @@ use crate::ppu::sprite::sprite_attributes::Priority;
 
 #[derive(Clone)]
 pub struct Frame {
-    buffer: FrameBuffer<(Color, Emphasis)>,
+    buffer: FrameBuffer<Rgb>,
 
     background_buffer: FrameBuffer<ColorT>,
     sprite_buffer: FrameBuffer<(ColorT, Priority)>,
@@ -28,7 +27,7 @@ pub struct Frame {
 impl Frame {
     pub fn new() -> Self {
         Self {
-            buffer: FrameBuffer::filled((Color::BLACK, Emphasis::OFF)),
+            buffer: FrameBuffer::filled(Rgb::BLACK),
 
             background_buffer: FrameBuffer::filled(ColorT::Transparent),
             sprite_buffer: FrameBuffer::filled((ColorT::Transparent, Priority::Behind)),
@@ -48,8 +47,8 @@ impl Frame {
         &mut self.show_overscan
     }
 
-    pub fn set_pixel(&mut self, pixel_index: PixelIndex, color: Color, emphasis: Emphasis) {
-        self.buffer[pixel_index] = (color, emphasis);
+    pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
+        self.buffer[pixel_index] = rgb;
     }
 
     pub fn set_background_pixel(&mut self, pixel_index: PixelIndex, color: ColorT) {
@@ -60,44 +59,43 @@ impl Frame {
         self.sprite_buffer[pixel_index] = (color, priority);
     }
 
-    pub fn pixel(&self, index: PixelIndex) -> (Color, Emphasis, bool) {
+    pub fn pixel(&self, index: PixelIndex) -> (Rgb, bool) {
         let visible = self.show_overscan || !index.is_in_overscan_region();
-        let (color, emphasis) = self.buffer[index];
-        (color, emphasis, visible)
+        let rgb = self.buffer[index];
+        (rgb, visible)
     }
 
-    pub fn write_all_pixel_data(&self, decoder: &dyn CompositeDecoder, data: &mut [u8]) {
+    pub fn write_all_pixel_data(&self, data: &mut [u8]) {
         for pixel_index in PixelIndex::iter() {
-            let (color, emphasis, _visible) = self.pixel(pixel_index);
-            let pixel = decoder.decode_to_rgb(color, emphasis);
+            let (rgb, _visible) = self.pixel(pixel_index);
 
             let index = 3 * pixel_index.to_usize();
-            data[index] = pixel.red();
-            data[index + 1] = pixel.green();
-            data[index + 2] = pixel.blue();
+            data[index] = rgb.red();
+            data[index + 1] = rgb.green();
+            data[index + 2] = rgb.blue();
         }
     }
 
-    pub fn copy_to_rgba_buffer(&self, decoder: &dyn CompositeDecoder, buffer: &mut [u8; 4 * PixelIndex::PIXEL_COUNT]) {
+    pub fn copy_to_rgba_buffer(&self, buffer: &mut [u8; 4 * PixelIndex::PIXEL_COUNT]) {
         for pixel_index in PixelIndex::iter() {
-            let (color, emphasis, visible) = self.pixel(pixel_index);
-            let mut pixel = decoder.decode_to_rgb(color, emphasis);
+            let (mut rgb, visible) = self.pixel(pixel_index);
             if !visible {
-                pixel = Rgb::BLACK;
+                // TODO: Probably make these pixels transparent instead.
+                rgb = Rgb::BLACK;
             }
 
             let index = 4 * pixel_index.to_usize();
-            buffer[index] = pixel.red();
-            buffer[index + 1] = pixel.green();
-            buffer[index + 2] = pixel.blue();
+            buffer[index] = rgb.red();
+            buffer[index + 1] = rgb.green();
+            buffer[index + 2] = rgb.blue();
             // No transparency.
             buffer[index + 3] = 0xFF;
         }
     }
 
-    pub fn to_ppm(&self, decoder: &dyn CompositeDecoder) -> Ppm {
+    pub fn to_ppm(&self) -> Ppm {
         let mut data = vec![0; 3 * PixelIndex::PIXEL_COUNT];
-        self.write_all_pixel_data(decoder, &mut data);
+        self.write_all_pixel_data(&mut data);
         Ppm::new(data)
     }
 }
@@ -107,7 +105,7 @@ impl Frame {
     // Used for debug windows only
     pub fn clear(&mut self) {
         // FIXME: Don't allocate new FrameBuffers to do this.
-        self.buffer = FrameBuffer::filled((Color::BLACK, Emphasis::OFF));
+        self.buffer = FrameBuffer::filled(Rgb::BLACK);
         self.background_buffer = FrameBuffer::filled(ColorT::Transparent);
         self.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind));
     }
@@ -155,14 +153,13 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
         }
     }
 
-    pub fn place_frame(&mut self, decoder: &dyn CompositeDecoder, left_column: usize, top_row: usize, frame: &Frame) {
+    pub fn place_frame(&mut self, left_column: usize, top_row: usize, frame: &Frame) {
         for index in PixelIndex::iter() {
-            let (color, emphasis, _visible) = frame.pixel(index);
-            let pixel = decoder.decode_to_rgb(color, emphasis);
+            let (rgb, _visible) = frame.pixel(index);
             self.write(
                 left_column + index.column.to_usize(),
                 top_row + index.row.to_usize(),
-                pixel,
+                rgb,
             );
         }
     }

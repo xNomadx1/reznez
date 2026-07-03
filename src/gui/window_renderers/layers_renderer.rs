@@ -39,10 +39,8 @@ impl WindowRenderer for LayersRenderer {
             return;
         };
 
-        let decoder = nes.bus().composite_decoders.get();
-        self.buffer.place_frame(decoder, 0, TOP_MENU_BAR_HEIGHT, nes.frame());
+        self.buffer.place_frame(0, TOP_MENU_BAR_HEIGHT, nes.frame());
         self.buffer.place_frame(
-            decoder,
             261,
             TOP_MENU_BAR_HEIGHT,
             &nes.frame().to_background_only(),
@@ -52,11 +50,11 @@ impl WindowRenderer for LayersRenderer {
 
         self.frame.clear();
         bus.oam.only_front_sprites().render(bus, &mut self.frame);
-        self.buffer.place_frame(decoder, 0, 245 + TOP_MENU_BAR_HEIGHT, &self.frame);
+        self.buffer.place_frame(0, 245 + TOP_MENU_BAR_HEIGHT, &self.frame);
 
         self.frame.clear();
         bus.oam.only_back_sprites().render(bus, &mut self.frame);
-        self.buffer.place_frame(decoder, 261, 245 + TOP_MENU_BAR_HEIGHT, &self.frame);
+        self.buffer.place_frame(261, 245 + TOP_MENU_BAR_HEIGHT, &self.frame);
 
         self.buffer.copy_to_rgba_buffer(pixels.frame_mut());
     }

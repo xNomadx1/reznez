@@ -208,7 +208,7 @@ impl TestSummary {
                     nes.step_frame();
                     if let Some(frame_entry) = frame_entries.get(&frame_number) {
                         let expected_hash = frame_entry.ppm_hash;
-                        let actual_ppm = &nes.frame().to_ppm(nes.bus().composite_decoders.get());
+                        let actual_ppm = &nes.frame().to_ppm();
                         let actual_hash = calculate_hash(&actual_ppm);
                         if actual_hash == expected_hash {
                             // FIXME: Hack until we allow different TestStatuses per frame for a single ROM.

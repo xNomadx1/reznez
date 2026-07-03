@@ -11,7 +11,6 @@ use pixels::Pixels;
 use crate::config::{Config, Event};
 use crate::controller::joypad::{Button, ButtonStatus};
 use crate::nes::Nes;
-use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::render::frame::Frame;
 use crate::ppu::render::frame_rate::TargetFrameRate;
 
@@ -36,10 +35,10 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixels:
 
     nes.process_gui_events(&events);
     nes.step_frame();
-    nes.frame().copy_to_rgba_buffer(nes.bus().composite_decoders.get(), pixels.frame_mut().try_into().unwrap());
+    nes.frame().copy_to_rgba_buffer(pixels.frame_mut().try_into().unwrap());
 
     if config.frame_dump {
-        dump_frame(nes.frame(), nes.bus().composite_decoders.get(), frame_index);
+        dump_frame(nes.frame(), frame_index);
     }
 
     log::logger().flush();
@@ -52,7 +51,7 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixels:
     }
 }
 
-fn dump_frame(frame: &Frame, decoder: &dyn CompositeDecoder, frame_index: i64) {
+fn dump_frame(frame: &Frame, frame_index: i64) {
     let mut frame = frame.clone();
     *frame.show_overscan_mut() = true;
 
@@ -61,7 +60,7 @@ fn dump_frame(frame: &Frame, decoder: &dyn CompositeDecoder, frame_index: i64) {
     }
     let file_name = format!("{FRAME_DUMP_DIRECTORY}/frame{frame_index:03}.ppm");
     let mut file = File::create(file_name).unwrap();
-    file.write_all(&frame.to_ppm(decoder).to_bytes()).unwrap();
+    file.write_all(&frame.to_ppm().to_bytes()).unwrap();
 }
 
 #[inline]
