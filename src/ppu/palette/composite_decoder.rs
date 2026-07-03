@@ -17,4 +17,6 @@ pub trait CompositeDecoder {
             ColorT::Opaque(color) => Rgbt::Opaque(self.decode_to_rgb(color, emphasis)),
         }
     }
+
+    fn finalize_scanline(&self, frame: &mut Frame, clock: &MasterClock);
 }

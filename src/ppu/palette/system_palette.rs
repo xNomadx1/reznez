@@ -117,6 +117,10 @@ impl CompositeDecoder for SystemPalette {
     fn decode_to_rgb(&self, color: Color, emphasis: Emphasis) -> Rgb {
         self.lookup_rgb(color, emphasis)
     }
+
+    fn finalize_scanline(&self, _: &mut Frame, _: &MasterClock) {
+        // Scanline is already finalized.
+    }
 }
 
 #[derive(Clone, Debug)]
