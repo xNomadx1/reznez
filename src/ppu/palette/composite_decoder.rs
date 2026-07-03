@@ -4,9 +4,10 @@ use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::ppu::register::ppu_registers::Emphasis;
+use crate::ppu::render::frame::Frame;
 
 pub trait CompositeDecoder {
-    fn start_scanline(&mut self, clock: &MasterClock);
+    fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis);
 
     fn decode_to_rgb(&self, color: Color, emphasis: Emphasis) -> Rgb;
 

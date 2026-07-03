@@ -259,7 +259,7 @@ impl Ppu {
                         (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
                     };
 
-                    frame.set_pixel(pixel_index, color, ppumask.emphasis());
+                    bus.composite_decoders.get_mut().set_color(frame, &bus.master_clock, color, ppumask.emphasis());
                     // These two are just for debug screens.
                     frame.set_background_pixel(pixel_index, background_color);
                     frame.set_sprite_pixel(pixel_index, sprite_color, sprite_priority);

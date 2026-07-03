@@ -4,8 +4,9 @@ use crate::ppu::palette::color::{Brightness, Color, Hue};
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::pixel_index::PixelIndex;
 use crate::ppu::register::ppu_registers::Emphasis;
+use crate::ppu::render::frame::Frame;
 
-const WAVELENGTH: u64 = 12;// Terminated voltage levels
+//const WAVELENGTH: u64 = 12;// Terminated voltage levels
 
 const LEVELS: [f32; 16] = [
     0.228, 0.312, 0.552, 0.880, // Signal low
@@ -31,8 +32,14 @@ impl NtscFloatDecoder {
 }
 
 impl CompositeDecoder for NtscFloatDecoder {
+    /*
     fn start_scanline(&mut self, clock: &MasterClock) {
         self.scanline_start_phase = (clock.ppu_clock().total_cycles() % WAVELENGTH) as u8;
+    }
+    */
+
+    fn set_color(&mut self, _: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
+        self.set_pixel_signal_levels(clock, color, emphasis);
     }
 
     fn decode_to_rgb(&self, _color: Color, _emphasis: Emphasis) -> Rgb {

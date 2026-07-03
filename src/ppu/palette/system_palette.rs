@@ -7,7 +7,9 @@ use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
+use crate::ppu::pixel_index::PixelIndex;
 use crate::ppu::register::ppu_registers::Emphasis;
+use crate::ppu::render::frame::Frame;
 
 // Good enough emphasis for now.
 // Taken from https://forums.nesdev.org/viewtopic.php?p=4634
@@ -106,8 +108,9 @@ impl SystemPalette {
 }
 
 impl CompositeDecoder for SystemPalette {
-    fn start_scanline(&mut self, _clock: &MasterClock) {
-        // Do nothing. Flat decoding doesn't care about clock phase.
+    fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
+        let index = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap();
+        frame.set_pixel(index, color, emphasis);
     }
 
     fn decode_to_rgb(&self, color: Color, emphasis: Emphasis) -> Rgb {
