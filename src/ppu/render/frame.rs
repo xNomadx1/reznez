@@ -14,6 +14,9 @@ use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::ppm::Ppm;
 use crate::ppu::sprite::sprite_attributes::Priority;
 
+const STANDARD_WIDTH: u16 = PixelColumn::COLUMN_COUNT as u16;
+const STANDARD_HEIGHT: u16 = PixelRow::ROW_COUNT as u16;
+
 #[derive(Clone)]
 pub struct Frame {
     buffer: FrameBuffer<Rgb>,
@@ -25,22 +28,34 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new() -> Self {
+    pub fn new(width: u16, height: u16) -> Self {
         Self {
-            buffer: FrameBuffer::filled(Rgb::BLACK),
+            buffer: FrameBuffer::filled(width, height, Rgb::BLACK),
 
-            background_buffer: FrameBuffer::filled(ColorT::Transparent),
-            sprite_buffer: FrameBuffer::filled((ColorT::Transparent, Priority::Behind)),
+            background_buffer: FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, ColorT::Transparent),
+            sprite_buffer: FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind)),
 
             show_overscan: false,
         }
     }
 
+    pub fn exact_sized() -> Self {
+        Self::new(STANDARD_WIDTH, STANDARD_HEIGHT)
+    }
+
     // Only used for debug windows.
     pub fn to_background_only(&self) -> Self {
         let mut frame = self.clone();
-        frame.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind));
+        frame.sprite_buffer = FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind));
         frame
+    }
+
+    pub fn width(&self) -> u16 {
+        self.buffer.column_count
+    }
+
+    pub fn height(&self) -> u16 {
+        self.buffer.row_count
     }
 
     pub fn show_overscan_mut(&mut self) -> &mut bool {
@@ -105,9 +120,9 @@ impl Frame {
     // Used for debug windows only
     pub fn clear(&mut self) {
         // FIXME: Don't allocate new FrameBuffers to do this.
-        self.buffer = FrameBuffer::filled(Rgb::BLACK);
-        self.background_buffer = FrameBuffer::filled(ColorT::Transparent);
-        self.sprite_buffer = FrameBuffer::filled((ColorT::Transparent, Priority::Behind));
+        self.buffer = FrameBuffer::filled(self.buffer.column_count, self.buffer.row_count, Rgb::BLACK);
+        self.background_buffer = FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, ColorT::Transparent);
+        self.sprite_buffer = FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind));
     }
 
     pub fn clear_sprite_line(&mut self, row: PixelRow) {
@@ -118,11 +133,19 @@ impl Frame {
 }
 
 #[derive(Clone)]
-struct FrameBuffer<T>(Box<[T; PixelColumn::COLUMN_COUNT * PixelRow::ROW_COUNT]>);
+struct FrameBuffer<T> {
+    buffer: Vec<T>,
+    column_count: u16,
+    row_count: u16,
+}
 
 impl<T: Copy> FrameBuffer<T> {
-    fn filled(value: T) -> FrameBuffer<T> {
-        FrameBuffer(Box::new([value; PixelColumn::COLUMN_COUNT * PixelRow::ROW_COUNT]))
+    fn filled(column_count: u16, row_count: u16, value: T) -> FrameBuffer<T> {
+        Self {
+            buffer: vec![value; (column_count * row_count) as usize],
+            column_count,
+            row_count,
+        }
     }
 }
 
@@ -130,13 +153,13 @@ impl<T> Index<PixelIndex> for FrameBuffer<T> {
     type Output = T;
 
     fn index(&self, index: PixelIndex) -> &T {
-        &self.0[index.to_usize()]
+        &self.buffer[index.to_usize()]
     }
 }
 
 impl<T> IndexMut<PixelIndex> for FrameBuffer<T> {
     fn index_mut(&mut self, index: PixelIndex) -> &mut T {
-        &mut self.0[index.to_usize()]
+        &mut self.buffer[index.to_usize()]
     }
 }
 

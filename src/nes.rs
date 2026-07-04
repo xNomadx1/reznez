@@ -76,7 +76,7 @@ impl Nes {
             mapper,
             resolved_metadata: metadata_resolver.resolve(),
             metadata_resolver,
-            frame: Frame::new(),
+            frame: Frame::new(256, 240),
 
             log_formatter: Box::new(MesenFormatter),
             snapshots: Snapshots::new(),

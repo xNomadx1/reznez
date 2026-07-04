@@ -96,7 +96,7 @@ impl PixelColumn {
         self.0 < 8
     }
 
-    pub fn to_u8(self) -> u8 {
+    pub const fn to_u8(self) -> u8 {
         self.0
     }
 
@@ -164,7 +164,7 @@ impl PixelRow {
         self.to_u8().checked_sub(other.to_u8())
     }
 
-    pub fn to_u8(self) -> u8 {
+    pub const fn to_u8(self) -> u8 {
         self.0
     }
 

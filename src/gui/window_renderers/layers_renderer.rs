@@ -19,7 +19,7 @@ impl LayersRenderer {
 
     pub fn new() -> LayersRenderer {
         LayersRenderer {
-            frame: Frame::new(),
+            frame: Frame::exact_sized(),
             buffer: DebugBuffer::new(Rgb::WHITE),
         }
     }

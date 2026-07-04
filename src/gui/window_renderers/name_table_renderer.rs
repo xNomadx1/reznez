@@ -20,7 +20,7 @@ impl NameTableRenderer {
 
     pub fn new() -> NameTableRenderer {
         NameTableRenderer {
-            frame: Frame::new(),
+            frame: Frame::exact_sized(),
             buffer: DebugBuffer::new(Rgb::WHITE),
         }
     }
