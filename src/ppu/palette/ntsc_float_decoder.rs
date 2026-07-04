@@ -38,7 +38,7 @@ impl CompositeDecoder for NtscFloatDecoder {
     fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
         let ppuclock = clock.ppu_clock();
         if ppuclock.cycle() == 1 {
-            self.scanline_start_phase = (ppuclock.total_cycles() % WAVELENGTH) as usize;
+            self.scanline_start_phase = (ppuclock.total_cycles() * 8 % WAVELENGTH) as usize;
         }
 
         self.set_pixel_signal_levels(clock, color, emphasis);
