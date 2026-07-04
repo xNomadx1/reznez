@@ -35,7 +35,7 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixels:
 
     nes.process_gui_events(&events);
     nes.step_frame();
-    nes.frame().copy_to_rgba_buffer(pixels.frame_mut().try_into().unwrap());
+    nes.frame().copy_to_rgba_buffer(pixels.frame_mut().try_into().unwrap(), nes.bus().composite_decoders.show_overscan);
 
     if config.frame_dump {
         dump_frame(nes.frame(), frame_index);
@@ -52,9 +52,6 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixels:
 }
 
 fn dump_frame(frame: &Frame, frame_index: i64) {
-    let mut frame = frame.clone();
-    *frame.show_overscan_mut() = true;
-
     if let Err(err) = fs::create_dir(FRAME_DUMP_DIRECTORY) {
         assert!(err.kind() == ErrorKind::AlreadyExists, "{:?}", err.kind());
     }

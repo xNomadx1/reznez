@@ -23,8 +23,6 @@ pub struct Frame {
 
     background_buffer: FrameBuffer<ColorT>,
     sprite_buffer: FrameBuffer<(ColorT, Priority)>,
-
-    show_overscan: bool,
 }
 
 impl Frame {
@@ -34,8 +32,6 @@ impl Frame {
 
             background_buffer: FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, ColorT::Transparent),
             sprite_buffer: FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind)),
-
-            show_overscan: false,
         }
     }
 
@@ -58,10 +54,6 @@ impl Frame {
         self.buffer.row_count
     }
 
-    pub fn show_overscan_mut(&mut self) -> &mut bool {
-        &mut self.show_overscan
-    }
-
     pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
         self.buffer[pixel_index] = rgb;
     }
@@ -74,15 +66,13 @@ impl Frame {
         self.sprite_buffer[pixel_index] = (color, priority);
     }
 
-    pub fn pixel(&self, index: PixelIndex) -> (Rgb, bool) {
-        let visible = self.show_overscan || !index.is_in_overscan_region();
-        let rgb = self.buffer[index];
-        (rgb, visible)
+    pub fn pixel(&self, index: PixelIndex) -> Rgb {
+        self.buffer[index]
     }
 
     pub fn write_all_pixel_data(&self, data: &mut [u8]) {
         for pixel_index in PixelIndex::iter() {
-            let (rgb, _visible) = self.pixel(pixel_index);
+            let rgb = self.pixel(pixel_index);
 
             let index = 3 * pixel_index.to_usize();
             data[index] = rgb.red();
@@ -91,10 +81,10 @@ impl Frame {
         }
     }
 
-    pub fn copy_to_rgba_buffer(&self, buffer: &mut [u8; 4 * PixelIndex::PIXEL_COUNT]) {
+    pub fn copy_to_rgba_buffer(&self, buffer: &mut [u8; 4 * PixelIndex::PIXEL_COUNT], show_overscan: bool) {
         for pixel_index in PixelIndex::iter() {
-            let (mut rgb, visible) = self.pixel(pixel_index);
-            if !visible {
+            let mut rgb = self.pixel(pixel_index);
+            if show_overscan && pixel_index.is_in_overscan_region() {
                 // TODO: Probably make these pixels transparent instead.
                 rgb = Rgb::BLACK;
             }
@@ -178,7 +168,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
 
     pub fn place_frame(&mut self, left_column: usize, top_row: usize, frame: &Frame) {
         for index in PixelIndex::iter() {
-            let (rgb, _visible) = frame.pixel(index);
+            let rgb = frame.pixel(index);
             self.write(
                 left_column + index.column.to_usize(),
                 top_row + index.row.to_usize(),

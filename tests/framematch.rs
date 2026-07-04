@@ -172,7 +172,7 @@ impl TestSummary {
 
                 let mut nes = Nes::new(&header_db, &config, &cartridge).unwrap();
                 nes.mute();
-                *nes.frame_mut().show_overscan_mut() = true;
+                nes.bus_mut().composite_decoders.show_overscan = true;
 
                 std::panic::update_hook(|prev, info| {
                     log::logger().flush();
