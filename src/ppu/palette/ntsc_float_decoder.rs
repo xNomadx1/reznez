@@ -116,12 +116,12 @@ impl NtscFloatDecoder {
             ((hue as u64) + phase) % 12 < 6
         };
 
-        let mut is_attenuated =
-               (emphasis.red()   && in_phase(Hue::Olive))
-            || (emphasis.green() && in_phase(Hue::Magenta))
-            || (emphasis.blue()  && in_phase(Hue::Cyan));
-        if matches!(hue, Hue::Black | Hue::ExtraBlack) {
-            is_attenuated = false;
+        let mut is_attenuated = false;
+        if !matches!(hue, Hue::Black | Hue::ExtraBlack) {
+            is_attenuated =
+                   (emphasis.red()   && in_phase(Hue::Cyan))
+                || (emphasis.green() && in_phase(Hue::Magenta))
+                || (emphasis.blue()  && in_phase(Hue::Olive));
         }
 
         let attenuation = if is_attenuated { 8 } else { 0 };
@@ -134,5 +134,90 @@ impl NtscFloatDecoder {
         if matches!(hue, Hue::DarkGray | Hue::Black | Hue::ExtraBlack) { high = low; }
 
         if in_phase(hue) { high } else { low }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normal_signal() {
+        let decoder = NtscFloatDecoder::new();
+
+        let color = Color::new(Brightness::Minimum, Hue::Azure);
+        assert_eq!(decoder.signal(0, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(6, color, Emphasis::OFF), 0.228);
+
+        assert_eq!(decoder.signal(0, color, Emphasis::OFF), decoder.signal(12, color, Emphasis::OFF));
+        assert_eq!(decoder.signal(6, color, Emphasis::OFF), decoder.signal(18, color, Emphasis::OFF));
+    }
+
+    #[test]
+    fn emphasis() {
+        let decoder = NtscFloatDecoder::new();
+        let color = Color::new(Brightness::Minimum, Hue::Azure);
+
+        assert_eq!(decoder.signal(0, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(0, color, Emphasis::RED), 0.5);
+
+        assert_eq!(decoder.signal(1, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(1, color, Emphasis::GREEN), 0.5);
+
+        assert_eq!(decoder.signal(4, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(4, color, Emphasis::BLUE), 0.5);
+
+        assert_eq!(decoder.signal(0, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(0, color, Emphasis::RED_GREEN), 0.5);
+
+        assert_eq!(decoder.signal(4, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(4, color, Emphasis::RED_BLUE), 0.5);
+
+        assert_eq!(decoder.signal(4, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(4, color, Emphasis::GREEN_BLUE), 0.5);
+    }
+
+    #[test]
+    fn color_0() {
+        let decoder = NtscFloatDecoder::new();
+        let color = Color::new(Brightness::Minimum, Hue::Gray);
+        let expected = decoder.signal(0, color, Emphasis::OFF);
+        assert_eq!(expected, 0.616);
+
+        for phase in 1..12 {
+            assert_eq!(decoder.signal(phase, color, Emphasis::OFF), expected);
+        }
+    }
+
+    #[test]
+    fn ignored_emphasis() {
+        let decoder = NtscFloatDecoder::new();
+        let black = Color::new(Brightness::Maximum, Hue::Black);
+        let extra_black = Color::new(Brightness::Maximum, Hue::ExtraBlack);
+        assert_eq!(decoder.signal(0, black, Emphasis::OFF), 0.312);
+        assert_eq!(decoder.signal(0, extra_black, Emphasis::OFF), 0.312);
+
+        for phase in 0..12 {
+            assert_eq!(
+                decoder.signal(phase, black, Emphasis::OFF),
+                decoder.signal(phase, black, Emphasis::ALL),
+            );
+            assert_eq!(
+                decoder.signal(phase, extra_black, Emphasis::OFF),
+                decoder.signal(phase, extra_black, Emphasis::ALL),
+            );
+        }
+    }
+
+    #[test]
+    fn attenuate_only_when_active() {
+        let decoder = NtscFloatDecoder::new();
+        let color = Color::new(Brightness::Minimum, Hue::Azure);
+
+        assert_eq!(decoder.signal(0, color, Emphasis::OFF), 0.616);
+        assert_eq!(decoder.signal(0, color, Emphasis::RED), 0.5);
+
+        assert_eq!(decoder.signal(6, color, Emphasis::OFF), 0.228);
+        assert_eq!(decoder.signal(6, color, Emphasis::RED), 0.228);
     }
 }
