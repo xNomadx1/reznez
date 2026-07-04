@@ -60,7 +60,7 @@ impl CompositeDecoder for NtscFloatDecoder {
         for x in 0..WIDTH {
             let center = x * SAMPLE_COUNT / WIDTH;
             let begin = center.saturating_sub(6);
-            let end = std::cmp::max(center + 6, SAMPLE_COUNT);
+            let end = std::cmp::min(center + 6, SAMPLE_COUNT);
 
             let mut y = 0.0;
             let mut u = 0.0;
