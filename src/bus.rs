@@ -562,7 +562,7 @@ impl Bus {
 
 pub struct CompositeDecoders {
     pub use_ntsc_float_decoder: bool,
-    system_palette: SystemPalette,
+    pub system_palette: SystemPalette,
     ntsc_float_decoder: NtscFloatDecoder,
 }
 

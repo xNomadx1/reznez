@@ -67,6 +67,13 @@ impl SystemPalette {
         self.0[emphasis.index()].0[color.to_usize()]
     }
 
+    pub fn lookup_rgbt(&self, color_t: ColorT, emphasis: Emphasis) -> Rgbt {
+        match color_t {
+            ColorT::Transparent => Rgbt::Transparent,
+            ColorT::Opaque(color) => Rgbt::Opaque(self.lookup_rgb(color, emphasis)),
+        }
+    }
+
     pub fn emphasis_section(&self, emphasis_index: usize) -> &SystemPaletteSection {
         &self.0[emphasis_index]
     }
@@ -112,14 +119,6 @@ impl CompositeDecoder for SystemPalette {
         let index = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap();
         let rgb = self.lookup_rgb(color, emphasis);
         frame.set_pixel(index, rgb);
-    }
-
-    fn decode_to_rgb(&self, color: Color, emphasis: Emphasis) -> Rgb {
-        self.lookup_rgb(color, emphasis)
-    }
-
-    fn finalize_scanline(&self, _: &mut Frame, _: &MasterClock) {
-        // Scanline is already finalized.
     }
 }
 

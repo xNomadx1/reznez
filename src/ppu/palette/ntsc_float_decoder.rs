@@ -3,7 +3,6 @@ use std::f32::consts::PI;
 use crate::master_clock::MasterClock;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::color::{Brightness, Color, Hue};
-use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::yuv::Yuv;
 use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
 use crate::ppu::register::ppu_registers::Emphasis;
@@ -31,26 +30,6 @@ impl NtscFloatDecoder {
             scanline_start_phase: 0,
             signal_levels: [0.0; 8 * 256],
         }
-    }
-}
-
-impl CompositeDecoder for NtscFloatDecoder {
-    fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
-        let ppuclock = clock.ppu_clock();
-        if ppuclock.cycle() == 1 {
-            self.scanline_start_phase = (ppuclock.total_cycles() * 8 % WAVELENGTH) as usize;
-        }
-
-        self.set_pixel_signal_levels(clock, color, emphasis);
-
-        if ppuclock.cycle() == 256 {
-            self.finalize_scanline(frame, clock);
-        }
-    }
-
-    fn decode_to_rgb(&self, _color: Color, _emphasis: Emphasis) -> Rgb {
-        //self.set_pixel_signal_levels(color, emphasis);
-        Rgb::BLACK
     }
 
     fn finalize_scanline(&self, frame: &mut Frame, clock: &MasterClock) {
@@ -84,6 +63,21 @@ impl CompositeDecoder for NtscFloatDecoder {
             };
             let yuv = Yuv { y, u, v };
             frame.set_pixel(pixel_index, yuv.to_rgb());
+        }
+    }
+}
+
+impl CompositeDecoder for NtscFloatDecoder {
+    fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
+        let ppuclock = clock.ppu_clock();
+        if ppuclock.cycle() == 1 {
+            self.scanline_start_phase = (ppuclock.total_cycles() * 8 % WAVELENGTH) as usize;
+        }
+
+        self.set_pixel_signal_levels(clock, color, emphasis);
+
+        if ppuclock.cycle() == 256 {
+            self.finalize_scanline(frame, clock);
         }
     }
 }

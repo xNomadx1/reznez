@@ -40,7 +40,7 @@ impl WindowRenderer for SpritesRenderer {
         for (index, sprite) in sprites.iter().enumerate() {
             let tile = sprite.render_normal_height(&PatternTable::sprite_side(bus), bus.palette_ram());
             self.buffer.place_tile(
-                bus.composite_decoders.get(),
+                &bus.composite_decoders.system_palette,
                 (8 + 1) * (index % 8),
                 (8 + 1) * (index / 8),
                 &tile,

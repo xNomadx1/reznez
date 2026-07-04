@@ -3,10 +3,10 @@ use std::ops::{Index, IndexMut};
 use enum_iterator::all;
 
 use crate::ppu::palette::color_t::ColorT;
-use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::gui::debug_screens::pattern_table::Tile;
+use crate::ppu::palette::system_palette::SystemPalette;
 use crate::ppu::pixel_index::{
     ColumnInTile, PixelColumn, PixelIndex, PixelRow, RowInTile,
 };
@@ -187,12 +187,12 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
         }
     }
 
-    pub fn place_tile(&mut self, decoder: &dyn CompositeDecoder, left_column: usize, top_row: usize, tile: &Tile) {
+    pub fn place_tile(&mut self, system_palette: &SystemPalette, left_column: usize, top_row: usize, tile: &Tile) {
         for row_in_tile in all::<RowInTile>() {
             for column_in_tile in all::<ColumnInTile>() {
                 let column_in_tile = column_in_tile as usize;
                 let row_in_tile = row_in_tile as usize;
-                let pixel = decoder.decode_to_rgbt(tile.0[row_in_tile][column_in_tile], Emphasis::OFF);
+                let pixel = system_palette.lookup_rgbt(tile.0[row_in_tile][column_in_tile], Emphasis::OFF);
                 self.write_rgbt(
                     left_column + column_in_tile,
                     top_row + row_in_tile,

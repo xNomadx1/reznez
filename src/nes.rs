@@ -35,6 +35,7 @@ use crate::bus::Bus;
 use crate::memory::register_ids::bank::{ChrBankRegisterId, PrgBankRegisterId};
 use crate::memory::signal_level::SignalLevel;
 use crate::ppu::name_table::name_table_mirroring::NameTableMirroring;
+use crate::ppu::pixel_index::{PixelColumn, PixelRow};
 use crate::ppu::ppu_clock::PpuClock;
 use crate::ppu::palette::bank_color_assigner::BankColorAssigner;
 use crate::ppu::ppu::Ppu;
@@ -76,7 +77,7 @@ impl Nes {
             mapper,
             resolved_metadata: metadata_resolver.resolve(),
             metadata_resolver,
-            frame: Frame::new(256, 240),
+            frame: Frame::new(PixelColumn::COLUMN_COUNT as u16, PixelRow::ROW_COUNT as u16),
 
             log_formatter: Box::new(MesenFormatter),
             snapshots: Snapshots::new(),
