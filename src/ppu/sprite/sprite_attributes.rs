@@ -55,8 +55,9 @@ impl SpriteAttributes {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Default)]
 pub enum Priority {
+    #[default]
     InFront,
     Behind,
 }

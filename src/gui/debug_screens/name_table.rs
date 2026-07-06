@@ -9,7 +9,7 @@ use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::palette_table_index::PaletteTableIndex;
 use crate::gui::debug_screens::pattern_table::PatternTable;
 use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
-use crate::ppu::render::frame::Frame;
+use crate::ppu::render::frame::FrameBuffer;
 use crate::ppu::tile_number::TileNumber;
 
 // Used for debug window purposes only. The actual rendering pipeline deals with unabstracted bytes.
@@ -31,7 +31,7 @@ impl<'a> NameTable<'a> {
         &self,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
-        frame: &mut Frame,
+        frame: &mut FrameBuffer<ColorT>,
     ) {
         for pixel_row in PixelRow::iter() {
             self.render_scanline(
@@ -53,7 +53,7 @@ impl<'a> NameTable<'a> {
         palette_ram: &PaletteRam,
         x_scroll: XScroll,
         y_scroll: YScroll,
-        frame: &mut Frame,
+        frame: &mut FrameBuffer<ColorT>,
     ) {
         for column in PixelColumn::iter() {
             self.render_pixel(
@@ -75,7 +75,7 @@ impl<'a> NameTable<'a> {
         palette_ram: &PaletteRam,
         x_scroll: XScroll,
         y_scroll: YScroll,
-        frame: &mut Frame,
+        frame: &mut FrameBuffer<ColorT>,
     ) {
         let (tile_column, column_in_tile) = x_scroll.tile_column(pixel_index.column);
         let (tile_row, row_in_tile) = y_scroll.tile_row(pixel_index.row);
@@ -89,7 +89,7 @@ impl<'a> NameTable<'a> {
             palette_ram.background_palette(palette_table_index),
             &mut tile_sliver,
         );
-        frame.set_background_pixel(pixel_index, tile_sliver[column_in_tile as usize]);
+        frame[pixel_index] = tile_sliver[column_in_tile as usize];
     }
 
     #[inline]

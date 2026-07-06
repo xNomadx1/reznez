@@ -35,7 +35,6 @@ use crate::bus::Bus;
 use crate::memory::register_ids::bank::{ChrBankRegisterId, PrgBankRegisterId};
 use crate::memory::signal_level::SignalLevel;
 use crate::ppu::name_table::name_table_mirroring::NameTableMirroring;
-use crate::ppu::pixel_index::{PixelColumn, PixelRow};
 use crate::ppu::ppu_clock::PpuClock;
 use crate::ppu::palette::bank_color_assigner::BankColorAssigner;
 use crate::ppu::ppu::Ppu;
@@ -47,7 +46,6 @@ pub struct Nes {
     mapper: Box<dyn Mapper>,
     resolved_metadata: ResolvedMetadata,
     metadata_resolver: MetadataResolver,
-    frame: Frame,
 
     log_formatter: Box<dyn Formatter>,
     snapshots: Snapshots,
@@ -77,7 +75,6 @@ impl Nes {
             mapper,
             resolved_metadata: metadata_resolver.resolve(),
             metadata_resolver,
-            frame: Frame::new(PixelColumn::COLUMN_COUNT as u16, PixelRow::ROW_COUNT as u16),
 
             log_formatter: Box::new(MesenFormatter),
             snapshots: Snapshots::new(),
@@ -114,11 +111,11 @@ impl Nes {
     }
 
     pub fn frame(&self) -> &Frame {
-        &self.frame
+        self.bus().composite_decoders.get().frame()
     }
 
-    pub fn frame_mut(&mut self) -> &mut Frame {
-        &mut self.frame
+    pub fn show_overscan_mut(&mut self) -> &mut bool {
+        &mut self.bus.composite_decoders.show_overscan
     }
 
     pub fn master_cycle(&self) -> u64 {
@@ -350,7 +347,7 @@ impl Nes {
 
     fn ppu_step_first_half(&mut self) -> bool {
         let is_last_cycle_of_frame = self.bus.master_clock.tick_ppu_clock(self.bus.ppu_regs.rendering_enabled()).is_some();
-        Ppu::step_first_half(&mut self.bus, &mut *self.mapper, &mut self.frame);
+        Ppu::step_first_half(&mut self.bus, &mut *self.mapper);
         is_last_cycle_of_frame
     }
 
@@ -361,7 +358,7 @@ impl Nes {
             self.snapshots.current().add_ppu_position(self.bus.master_clock().ppu_clock());
         }
 
-        Ppu::step_first_half(&mut self.bus, &mut *self.mapper, &mut self.frame);
+        Ppu::step_first_half(&mut self.bus, &mut *self.mapper);
 
         self.detect_changes();
 

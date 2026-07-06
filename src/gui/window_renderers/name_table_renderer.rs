@@ -1,16 +1,19 @@
 use egui::{Context, Ui};
 use pixels::Pixels;
 
+use crate::bus::Bus;
 use crate::gui::debug_screens::name_table::NameTable;
 use crate::gui::debug_screens::pattern_table::PatternTable;
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 use crate::ppu::name_table::name_table_quadrant::NameTableQuadrant;
+use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::rgb::Rgb;
-use crate::ppu::render::frame::{DebugBuffer, Frame};
+use crate::ppu::register::ppu_registers::Emphasis;
+use crate::ppu::render::frame::{DebugBuffer, FrameBuffer};
 
 pub struct NameTableRenderer {
-    frame: Frame,
+    frame: FrameBuffer<ColorT>,
     buffer: DebugBuffer<{ NameTableRenderer::WIDTH }, { NameTableRenderer::HEIGHT }>,
 }
 
@@ -20,7 +23,7 @@ impl NameTableRenderer {
 
     pub fn new() -> NameTableRenderer {
         NameTableRenderer {
-            frame: Frame::exact_sized(),
+            frame: FrameBuffer::default(),
             buffer: DebugBuffer::new(Rgb::WHITE),
         }
     }
@@ -57,16 +60,16 @@ impl WindowRenderer for NameTableRenderer {
 
         NameTable::new(bus.raw_name_table(NameTableQuadrant::TopLeft))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(1, 1, &self.frame);
+        self.buffer.place_frame_buffer_with(1, 1, &self.frame, |color_t| color_t_to_rgb(&bus, color_t));
         NameTable::new(bus.raw_name_table(NameTableQuadrant::TopRight))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(257, 1, &self.frame);
+        self.buffer.place_frame_buffer_with(257, 1, &self.frame, |color_t| color_t_to_rgb(&bus, color_t));
         NameTable::new(bus.raw_name_table(NameTableQuadrant::BottomLeft))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(1, 241, &self.frame);
+        self.buffer.place_frame_buffer_with(1, 241, &self.frame, |color_t| color_t_to_rgb(&bus, color_t));
         NameTable::new(bus.raw_name_table(NameTableQuadrant::BottomRight))
             .render(&background_table, bus.palette_ram(), &mut self.frame);
-        self.buffer.place_frame(257, 241, &self.frame);
+        self.buffer.place_frame_buffer_with(257, 241, &self.frame, |color_t| color_t_to_rgb(&bus, color_t));
 
         self.buffer.place_wrapping_horizontal_line(y, x, x + 257, Rgb::new(255, 0, 0));
         self.buffer.place_wrapping_horizontal_line(y + 241, x, x + 257, Rgb::new(255, 0, 0));
@@ -83,4 +86,11 @@ impl WindowRenderer for NameTableRenderer {
     fn height(&self) -> usize {
         Self::HEIGHT
     }
+}
+
+fn color_t_to_rgb(bus: &Bus, color_t: ColorT) -> Rgb {
+    bus.composite_decoders.system_palette_decoder.system_palette()
+        .lookup_rgbt(color_t, Emphasis::OFF)
+        .to_rgb()
+        .unwrap_or(Rgb::BLACK)
 }

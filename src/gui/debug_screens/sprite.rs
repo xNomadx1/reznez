@@ -5,7 +5,7 @@ use crate::memory::regions::palette_ram::PaletteRam;
 use crate::ppu::palette::color_t::ColorT;
 use crate::gui::debug_screens::pattern_table::{PatternTable, Tile};
 use crate::ppu::pixel_index::{ColumnInTile, PixelColumn, PixelIndex, PixelRow, RowInTile};
-use crate::ppu::render::frame::Frame;
+use crate::ppu::render::frame::FrameBuffer;
 use crate::ppu::sprite::sprite_attributes::{SpriteAttributes, Priority};
 use crate::ppu::sprite::sprite_half::SpriteHalf;
 use crate::ppu::sprite::sprite_height::SpriteHeight;
@@ -79,7 +79,7 @@ impl Sprite {
         sprite_height: SpriteHeight,
         pattern_table: &PatternTable,
         palette_ram: &PaletteRam,
-        frame: &mut Frame,
+        frame: &mut FrameBuffer<ColorT>,
     ) {
         let Some((sprite_half, row_in_half, _visible)) =
             self.y_coordinate.row_in_sprite(self.attributes.flip_vertically(), sprite_height, row) else {
@@ -101,7 +101,7 @@ impl Sprite {
             let column_in_sprite = ColumnInTile::from_usize(column_in_sprite).unwrap();
             if let ColorT::Opaque(_) = color && let Some(column) = self.x_coordinate.add_column_in_tile(column_in_sprite) {
                 let index = PixelIndex { column, row };
-                frame.set_sprite_pixel(index, color, self.priority());
+                frame[index] = color;
             }
         }
     }

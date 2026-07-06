@@ -27,6 +27,7 @@ use crate::ppu::name_table::name_table_mirroring::{NameTableMirroring, NameTable
 use crate::ppu::name_table::name_table_quadrant::NameTableQuadrant;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::ntsc_float_decoder::NtscFloatDecoder;
+use crate::ppu::palette::system_palette_decoder::SystemPaletteDecoder;
 use crate::ppu::ppu_clock::PpuClock;
 use crate::ppu::palette::system_palette::SystemPalette;
 use crate::ppu::ppu::Ppu;
@@ -125,7 +126,7 @@ impl Bus {
 
             composite_decoders: CompositeDecoders {
                 use_ntsc_float_decoder: false,
-                system_palette,
+                system_palette_decoder: SystemPaletteDecoder::new(system_palette),
                 ntsc_float_decoder: NtscFloatDecoder::new(),
                 show_overscan: false,
             },
@@ -563,7 +564,7 @@ impl Bus {
 
 pub struct CompositeDecoders {
     pub use_ntsc_float_decoder: bool,
-    pub system_palette: SystemPalette,
+    pub system_palette_decoder: SystemPaletteDecoder,
     ntsc_float_decoder: NtscFloatDecoder,
 
     pub show_overscan: bool,
@@ -574,7 +575,7 @@ impl CompositeDecoders {
         if self.use_ntsc_float_decoder {
             &self.ntsc_float_decoder
         } else {
-            &self.system_palette
+            &self.system_palette_decoder
         }
     }
 
@@ -582,7 +583,7 @@ impl CompositeDecoders {
         if self.use_ntsc_float_decoder {
             &mut self.ntsc_float_decoder
         } else {
-            &mut self.system_palette
+            &mut self.system_palette_decoder
         }
     }
 }

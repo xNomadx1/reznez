@@ -1,15 +1,11 @@
 use enum_iterator::all;
 use num_traits::FromPrimitive;
 
-use crate::master_clock::MasterClock;
 use crate::ppu::palette::color::{Brightness, Color, Hue};
 use crate::ppu::palette::color_t::ColorT;
-use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
-use crate::ppu::pixel_index::PixelIndex;
 use crate::ppu::register::ppu_registers::Emphasis;
-use crate::ppu::render::frame::Frame;
 
 // Good enough emphasis for now.
 // Taken from https://forums.nesdev.org/viewtopic.php?p=4634
@@ -111,14 +107,6 @@ impl SystemPalette {
         }
 
         Ok(())
-    }
-}
-
-impl CompositeDecoder for SystemPalette {
-    fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
-        let index = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap();
-        let rgb = self.lookup_rgb(color, emphasis);
-        frame.set_pixel(index, rgb);
     }
 }
 

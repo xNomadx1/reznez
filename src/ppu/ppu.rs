@@ -16,7 +16,7 @@ use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
 use crate::ppu::register::ppu_registers::Toggle;
 use crate::ppu::register::registers::attribute_register::AttributeRegister;
 use crate::ppu::register::registers::pattern_register::PatternRegister;
-use crate::ppu::render::frame::{DebugBuffer, Frame};
+use crate::ppu::render::frame::{DebugBuffer, FrameBuffer};
 use crate::ppu::sprite::sprite_attributes::{Priority, SpriteAttributes};
 use crate::ppu::sprite::oam_registers::OamRegisters;
 use crate::ppu::sprite::sprite_y::SpriteY;
@@ -44,6 +44,9 @@ pub struct Ppu {
 
     frame_actions: FrameActions,
 
+    // Used only for debug screens
+    background_buffer: FrameBuffer<ColorT>,
+    sprite_buffer: FrameBuffer<ColorT>,
     pattern_source_debug_buffer: DebugBuffer<{PixelColumn::COLUMN_COUNT}, {PixelRow::ROW_COUNT}>,
     bank_color_assigner: BankColorAssigner,
 }
@@ -68,12 +71,14 @@ impl Ppu {
 
             frame_actions: NTSC_FRAME_ACTIONS.clone(),
 
+            background_buffer: FrameBuffer::default(),
+            sprite_buffer: FrameBuffer::default(),
             pattern_source_debug_buffer: DebugBuffer::new(Rgb::BLACK),
             bank_color_assigner,
         }
     }
 
-    pub fn step_first_half(bus: &mut Bus, mapper: &mut dyn Mapper, frame: &mut Frame) {
+    pub fn step_first_half(bus: &mut Bus, mapper: &mut dyn Mapper) {
         let tick_result = bus.ppu_regs.tick(bus.master_clock.ppu_clock());
         if tick_result.rendering_toggled == Some(Toggle::Disable) {
             // "... when rendering is disabled, the value on the PPU address bus is the current value of the v register."
@@ -88,7 +93,7 @@ impl Ppu {
         let len = bus.ppu.frame_actions.current_cycle_actions(bus.ppu_clock()).len();
         for i in 0..len {
             let cycle_action = bus.ppu.frame_actions.current_cycle_actions(bus.master_clock.ppu_clock())[i];
-            Ppu::execute_cycle_action(bus, mapper, frame, cycle_action);
+            Ppu::execute_cycle_action(bus, mapper, cycle_action);
         }
 
         if bus.ppu_regs.suppress_vblank_active {
@@ -155,7 +160,7 @@ impl Ppu {
         }
     }
 
-    fn execute_cycle_action(bus: &mut Bus, mapper: &mut dyn Mapper, frame: &mut Frame, cycle_action: CycleAction) {
+    fn execute_cycle_action(bus: &mut Bus, mapper: &mut dyn Mapper, cycle_action: CycleAction) {
         use CycleAction::*;
         match cycle_action {
             SetPatternIndexAddress => {
@@ -259,10 +264,10 @@ impl Ppu {
                         (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
                     };
 
-                    bus.composite_decoders.get_mut().set_color(frame, &bus.master_clock, color, ppumask.emphasis());
+                    bus.composite_decoders.get_mut().set_color(&bus.master_clock, color, ppumask.emphasis());
                     // These two are just for debug screens.
-                    frame.set_background_pixel(pixel_index, background_color);
-                    frame.set_sprite_pixel(pixel_index, sprite_color, sprite_priority);
+                    bus.ppu.background_buffer[pixel_index] = background_color;
+                    bus.ppu.sprite_buffer[pixel_index] = sprite_color;
 
                     // https://wiki.nesdev.org/w/index.php?title=PPU_OAM#Sprite_zero_hits
                     let sprite_0_hit =

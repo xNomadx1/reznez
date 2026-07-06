@@ -2,11 +2,12 @@ use crate::gui::debug_screens::pattern_table::PatternTable;
 use crate::gui::debug_screens::sprite::Sprite;
 use crate::bus::Bus;
 use crate::memory::primitives::dram_byte::DramByte;
+use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::pixel_index::PixelRow;
 use crate::ppu::sprite::oam::Oam;
 use crate::ppu::sprite::oam_address::OamAddress;
 use crate::ppu::sprite::sprite_attributes::Priority;
-use crate::ppu::render::frame::Frame;
+use crate::ppu::render::frame::FrameBuffer;
 use crate::ppu::sprite::sprite_height::SpriteHeight;
 
 /**
@@ -65,14 +66,14 @@ impl Oam {
         })
     }
 
-    pub fn render(&self, bus: &Bus, frame: &mut Frame) {
+    pub fn render(&self, bus: &Bus, frame: &mut FrameBuffer<ColorT>) {
         for pixel_row in PixelRow::iter() {
             self.render_scanline(pixel_row, bus, frame);
         }
     }
 
-    pub fn render_scanline(&self, pixel_row: PixelRow, bus: &Bus, frame: &mut Frame) {
-        frame.clear_sprite_line(pixel_row);
+    pub fn render_scanline(&self, pixel_row: PixelRow, bus: &Bus, frame: &mut FrameBuffer<ColorT>) {
+        frame.clear_row(pixel_row);
 
         let sprite_table_side = bus.ppu_regs.sprite_table_side();
         let mut pattern_table = PatternTable::from_mem(bus, sprite_table_side);

@@ -28,3 +28,9 @@ impl ColorT {
         }
     }
 }
+
+impl Default for ColorT {
+    fn default() -> Self {
+        Self::Transparent
+    }
+}

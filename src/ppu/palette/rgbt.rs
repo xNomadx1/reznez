@@ -28,3 +28,9 @@ impl Rgbt {
         }
     }
 }
+
+impl Default for Rgbt {
+    fn default() -> Self {
+        Self::Transparent
+    }
+}

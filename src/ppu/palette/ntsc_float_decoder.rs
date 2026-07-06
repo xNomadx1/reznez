@@ -20,6 +20,7 @@ const LEVELS: [f32; 16] = [
 // Reference implementation: https://www.nesdev.org/wiki/NTSC_video#Emulating_in_C++_code
 #[allow(dead_code)]
 pub struct NtscFloatDecoder {
+    frame: Frame,
     scanline_start_phase: usize, // 0-11
     signal_levels: [f32; 8 * 256], // All signal levels for a single scanline, 8 per pixel
 }
@@ -27,12 +28,13 @@ pub struct NtscFloatDecoder {
 impl NtscFloatDecoder {
     pub fn new() -> Self {
         Self {
+            frame: Frame::exact_sized(),
             scanline_start_phase: 0,
             signal_levels: [0.0; 8 * 256],
         }
     }
 
-    fn finalize_scanline(&self, frame: &mut Frame, clock: &MasterClock) {
+    fn finalize_scanline(&mut self, clock: &MasterClock) {
         const WIDTH: usize = 256;
         const SAMPLE_COUNT: usize = 8 * 256;
 
@@ -62,13 +64,17 @@ impl NtscFloatDecoder {
                 row: PixelRow::from_scanline(clock.ppu_clock().scanline()).unwrap(),
             };
             let yuv = Yuv { y, u, v };
-            frame.set_pixel(pixel_index, yuv.to_rgb());
+            self.frame.set_pixel(pixel_index, yuv.to_rgb());
         }
     }
 }
 
 impl CompositeDecoder for NtscFloatDecoder {
-    fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
+    fn frame(&self) -> &Frame {
+        &self.frame
+    }
+
+    fn set_color(&mut self, clock: &MasterClock, color: Color, emphasis: Emphasis) {
         let ppuclock = clock.ppu_clock();
         if ppuclock.cycle() == 1 {
             self.scanline_start_phase = (ppuclock.total_cycles() * 8 % WAVELENGTH) as usize;
@@ -77,7 +83,7 @@ impl CompositeDecoder for NtscFloatDecoder {
         self.set_pixel_signal_levels(clock, color, emphasis);
 
         if ppuclock.cycle() == 256 {
-            self.finalize_scanline(frame, clock);
+            self.finalize_scanline(clock);
         }
     }
 }

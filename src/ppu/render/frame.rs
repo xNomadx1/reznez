@@ -2,7 +2,6 @@ use std::ops::{Index, IndexMut};
 
 use enum_iterator::all;
 
-use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::gui::debug_screens::pattern_table::Tile;
@@ -12,38 +11,24 @@ use crate::ppu::pixel_index::{
 };
 use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::ppm::Ppm;
-use crate::ppu::sprite::sprite_attributes::Priority;
 
 const STANDARD_WIDTH: u16 = PixelColumn::COLUMN_COUNT as u16;
 const STANDARD_HEIGHT: u16 = PixelRow::ROW_COUNT as u16;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Frame {
     buffer: FrameBuffer<Rgb>,
-
-    background_buffer: FrameBuffer<ColorT>,
-    sprite_buffer: FrameBuffer<(ColorT, Priority)>,
 }
 
 impl Frame {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             buffer: FrameBuffer::filled(width, height, Rgb::BLACK),
-
-            background_buffer: FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, ColorT::Transparent),
-            sprite_buffer: FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind)),
         }
     }
 
     pub fn exact_sized() -> Self {
         Self::new(STANDARD_WIDTH, STANDARD_HEIGHT)
-    }
-
-    // Only used for debug windows.
-    pub fn to_background_only(&self) -> Self {
-        let mut frame = self.clone();
-        frame.sprite_buffer = FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind));
-        frame
     }
 
     pub fn width(&self) -> u16 {
@@ -56,14 +41,6 @@ impl Frame {
 
     pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
         self.buffer[pixel_index] = rgb;
-    }
-
-    pub fn set_background_pixel(&mut self, pixel_index: PixelIndex, color: ColorT) {
-        self.background_buffer[pixel_index] = color;
-    }
-
-    pub fn set_sprite_pixel(&mut self, pixel_index: PixelIndex, color: ColorT, priority: Priority) {
-        self.sprite_buffer[pixel_index] = (color, priority);
     }
 
     pub fn pixel(&self, index: PixelIndex) -> Rgb {
@@ -111,31 +88,43 @@ impl Frame {
     pub fn clear(&mut self) {
         // FIXME: Don't allocate new FrameBuffers to do this.
         self.buffer = FrameBuffer::filled(self.buffer.column_count, self.buffer.row_count, Rgb::BLACK);
-        self.background_buffer = FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, ColorT::Transparent);
-        self.sprite_buffer = FrameBuffer::filled(STANDARD_WIDTH, STANDARD_HEIGHT, (ColorT::Transparent, Priority::Behind));
-    }
-
-    pub fn clear_sprite_line(&mut self, row: PixelRow) {
-        for column in PixelColumn::iter() {
-            self.sprite_buffer[PixelIndex { column, row }] = (ColorT::Transparent, Priority::Behind);
-        }
     }
 }
 
-#[derive(Clone)]
-struct FrameBuffer<T> {
+#[derive(Clone, Debug)]
+pub struct FrameBuffer<T> {
     buffer: Vec<T>,
     column_count: u16,
     row_count: u16,
 }
 
 impl<T: Copy> FrameBuffer<T> {
-    fn filled(column_count: u16, row_count: u16, value: T) -> FrameBuffer<T> {
+    pub fn filled(column_count: u16, row_count: u16, value: T) -> FrameBuffer<T> {
         Self {
             buffer: vec![value; (column_count * row_count) as usize],
             column_count,
             row_count,
         }
+    }
+}
+
+impl<T: Default> FrameBuffer<T> {
+    pub fn clear_row(&mut self, row: PixelRow) {
+        for column in PixelColumn::iter() {
+            self[PixelIndex { column, row }] = T::default();
+        }
+    }
+}
+
+impl<T: Copy + Default> FrameBuffer<T> {
+    pub fn clear(&mut self) {
+        *self = FrameBuffer::default();
+    }
+}
+
+impl<T: Copy + Default> Default for FrameBuffer<T> {
+    fn default() -> Self {
+        Self::filled(PixelColumn::COLUMN_COUNT as u16, PixelRow::ROW_COUNT as u16, T::default())
     }
 }
 
@@ -173,6 +162,23 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
                 left_column + index.column.to_usize(),
                 top_row + index.row.to_usize(),
                 rgb,
+            );
+        }
+    }
+
+    pub fn place_frame_buffer_with<F, T: Copy>(
+        &mut self,
+        left_column: usize,
+        top_row: usize,
+        frame: &FrameBuffer<T>,
+        transform: F,
+    ) where F: Fn(T) -> Rgb {
+        for index in PixelIndex::iter() {
+            let value = frame[index];
+            self.write(
+                left_column + index.column.to_usize(),
+                top_row + index.row.to_usize(),
+                transform(value),
             );
         }
     }
