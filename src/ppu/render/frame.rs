@@ -128,6 +128,24 @@ impl<T: Copy + Default> Default for FrameBuffer<T> {
     }
 }
 
+impl<T> Index<(u16, u16)> for FrameBuffer<T> {
+    type Output = T;
+
+    fn index(&self, (column, row): (u16, u16)) -> &T {
+        assert!(column < self.column_count);
+        assert!(row < self.row_count);
+        &self.buffer[usize::from(row) * usize::from(self.column_count) + usize::from(column)]
+    }
+}
+
+impl<T> IndexMut<(u16, u16)> for FrameBuffer<T> {
+    fn index_mut(&mut self, (column, row): (u16, u16)) -> &mut T {
+        assert!(column < self.column_count);
+        assert!(row < self.row_count);
+        &mut self.buffer[usize::from(row) * usize::from(self.column_count) + usize::from(column)]
+    }
+}
+
 impl<T> Index<PixelIndex> for FrameBuffer<T> {
     type Output = T;
 

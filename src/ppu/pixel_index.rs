@@ -30,6 +30,10 @@ impl PixelIndex {
         self.column.is_in_overscan_region() || self.row.is_in_overscan_region()
     }
 
+    pub fn to_u16_column_row(self) -> (u16, u16) {
+        (self.column.to_u16(), self.row.to_u16())
+    }
+
     pub fn to_usize(self) -> usize {
         PixelColumn::COLUMN_COUNT * self.row.to_usize() + self.column.to_usize()
     }
@@ -100,6 +104,10 @@ impl PixelColumn {
         self.0
     }
 
+    pub const fn to_u16(self) -> u16 {
+        self.0 as u16
+    }
+
     pub fn to_usize(self) -> usize {
         self.0 as usize
     }
@@ -166,6 +174,10 @@ impl PixelRow {
 
     pub const fn to_u8(self) -> u8 {
         self.0
+    }
+
+    pub const fn to_u16(self) -> u16 {
+        self.0 as u16
     }
 
     pub fn to_usize(self) -> usize {

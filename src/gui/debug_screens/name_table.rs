@@ -89,7 +89,7 @@ impl<'a> NameTable<'a> {
             palette_ram.background_palette(palette_table_index),
             &mut tile_sliver,
         );
-        frame[pixel_index] = tile_sliver[column_in_tile as usize];
+        frame[pixel_index.to_u16_column_row()] = tile_sliver[column_in_tile as usize];
     }
 
     #[inline]

@@ -101,7 +101,7 @@ impl Sprite {
             let column_in_sprite = ColumnInTile::from_usize(column_in_sprite).unwrap();
             if let ColorT::Opaque(_) = color && let Some(column) = self.x_coordinate.add_column_in_tile(column_in_sprite) {
                 let index = PixelIndex { column, row };
-                frame[index] = color;
+                frame[index.to_u16_column_row()] = color;
             }
         }
     }
