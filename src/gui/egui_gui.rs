@@ -4,7 +4,7 @@ use std::sync::{Arc, LazyLock};
 use gilrs::GamepadId;
 
 use egui::{ClippedPrimitive, Context, FontDefinitions, TexturesDelta, ViewportId};
-use egui_wgpu::{Renderer, RendererOptions, ScreenDescriptor};
+use egui_wgpu::{Renderer, ScreenDescriptor};
 use gilrs;
 use log::{info, warn};
 use pixels::{Pixels, SurfaceTexture};
@@ -25,6 +25,7 @@ use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::window_renderers::primary_renderer::PrimaryRenderer;
 use crate::gui::world::World;
 use crate::nes::Nes;
+use crate::ppu::render::frame::PixelBuffer;
 
 #[rustfmt::skip]
 static JOY_1_KEYBOARD_MAPPINGS: LazyLock<HashMap<KeyCode, Button>> = LazyLock::new(|| {
@@ -203,7 +204,7 @@ struct EguiWindow {
 
     // State for the GUI
     window: Arc<Window>,
-    pixels: Pixels<'static>,
+    pixel_buffer: PixelBuffer,
     window_renderer: Box<dyn WindowRenderer>,
 }
 
@@ -244,8 +245,8 @@ impl EguiWindow {
         let window_size = window.inner_size();
         let scale_factor = window.scale_factor() as f32;
         let window = Arc::new(window);
-        let surface_texture =
-            SurfaceTexture::new(window_size.width, window_size.height, window.clone());
+        let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, window.clone());
+        // TODO: Should be able to skip redundantly specifying the dimensions.
         let pixels = Pixels::new(
             renderer.width() as u32,
             renderer.height() as u32,
@@ -258,7 +259,7 @@ impl EguiWindow {
             window_size.height,
             scale_factor,
             window.clone(),
-            pixels,
+            PixelBuffer::new(pixels),
             renderer,
         )
     }
@@ -268,7 +269,7 @@ impl EguiWindow {
         height: u32,
         scale_factor: f32,
         window: Arc<Window>,
-        pixels: pixels::Pixels<'static>,
+        pixel_buffer: PixelBuffer,
         window_renderer: Box<dyn WindowRenderer>,
     ) -> Self {
         let egui_ctx = Context::default();
@@ -280,25 +281,23 @@ impl EguiWindow {
             &window,
             None,
             None,
-            Some(pixels.device().limits().max_texture_dimension_2d as usize),
+            Some(pixel_buffer.max_texture_dimension_2d()),
         );
         let screen_descriptor = ScreenDescriptor {
             pixels_per_point: scale_factor,
             size_in_pixels: [width, height],
         };
-        let renderer_options = RendererOptions::default();
-        let wgpu_renderer = Renderer::new(pixels.device(), pixels.render_texture_format(), renderer_options);
         let textures = TexturesDelta::default();
 
         Self {
             egui_state,
             screen_descriptor,
-            wgpu_renderer,
+            wgpu_renderer: pixel_buffer.wgpu_renderer(),
             paint_jobs: Vec::new(),
             textures,
             has_presented_frame: false,
             window,
-            pixels,
+            pixel_buffer,
             window_renderer,
         }
     }
@@ -309,7 +308,7 @@ impl EguiWindow {
     }
 
     fn draw(&mut self, world: &mut World) -> Result<FlowControl, String> {
-        self.window_renderer.render(world, &mut self.pixels);
+        self.window_renderer.render(world, &mut self.pixel_buffer);
 
         // Run the egui frame and create all paint jobs to prepare for rendering.
         let mut raw_input = self.egui_state.take_egui_input(&self.window);
@@ -332,7 +331,7 @@ impl EguiWindow {
             .egui_ctx()
             .tessellate(output.shapes, PRIMARY_WINDOW_SCALE_FACTOR);
 
-        self.pixels
+        self.pixel_buffer
             .render_with(|encoder, render_target, context| {
                 context.scaling_renderer.render(encoder, render_target);
                 for (id, delta) in &self.textures.set {

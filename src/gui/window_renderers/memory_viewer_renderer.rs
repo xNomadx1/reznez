@@ -1,10 +1,10 @@
 use egui::{Context, Ui};
-use pixels::Pixels;
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 use crate::bus::AddressBusType;
 use crate::memory::cpu::cpu_address::CpuAddress;
+use crate::ppu::render::frame::PixelBuffer;
 
 pub struct MemoryViewerRenderer;
 
@@ -44,7 +44,7 @@ impl WindowRenderer for MemoryViewerRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, _world: &mut World, _pixels: &mut Pixels) {
+    fn render(&mut self, _world: &mut World, _pixel_buffer: &mut PixelBuffer) {
         // Do nothing yet.
     }
 

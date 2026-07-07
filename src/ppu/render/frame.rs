@@ -1,6 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use enum_iterator::all;
+use pixels::{Pixels, PixelsContext, wgpu};
 
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
@@ -292,5 +293,39 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
 
     pub fn write_rgbt(&mut self, column: usize, row: usize, rgbt: Rgbt) {
         self.buffer[row][column] = rgbt;
+    }
+}
+
+pub struct PixelBuffer {
+    pixels: Pixels<'static>,
+}
+
+impl PixelBuffer {
+    pub fn new(pixels: Pixels<'static>) -> Self {
+        Self { pixels }
+    }
+
+    pub fn frame_mut(&mut self) -> &mut [u8] {
+        self.pixels.frame_mut()
+    }
+
+    pub fn max_texture_dimension_2d(&self) -> usize {
+        self.pixels.device().limits().max_texture_dimension_2d as usize
+    }
+
+    pub fn wgpu_renderer(&self) -> egui_wgpu::Renderer {
+        let renderer_options = egui_wgpu::RendererOptions::default();
+        egui_wgpu::Renderer::new(self.pixels.device(), self.pixels.render_texture_format(), renderer_options)
+    }
+
+    pub fn render_with<F>(&self, render_function: F) -> Result<(), pixels::Error>
+    where
+        F: FnOnce(
+            &mut wgpu::CommandEncoder,
+            &wgpu::TextureView,
+            &PixelsContext,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>,
+    {
+        self.pixels.render_with(render_function)
     }
 }

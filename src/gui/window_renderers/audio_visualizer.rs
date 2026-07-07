@@ -1,6 +1,5 @@
 use egui::{Context, Ui};
 use egui_plot::{GridMark, Line, Plot};
-use pixels::Pixels;
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
@@ -161,10 +160,6 @@ impl WindowRenderer for AudioVisualizer {
         });
 
         FlowControl::CONTINUE
-    }
-
-    fn render(&mut self, _world: &mut World, _pixels: &mut Pixels) {
-        // Do nothing yet.
     }
 
     fn width(&self) -> usize {

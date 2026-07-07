@@ -1,9 +1,9 @@
 use egui::{Context, Ui};
-use pixels::Pixels;
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 use crate::ppu::pixel_index::{PixelColumn, PixelRow};
+use crate::ppu::render::frame::PixelBuffer;
 
 pub struct PatternSourceRenderer;
 
@@ -20,12 +20,12 @@ impl WindowRenderer for PatternSourceRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, world: &mut World, pixels: &mut Pixels) {
+    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
         let Some(nes) = &world.nes else {
             return;
         };
 
-        nes.ppu().pattern_source_debug_buffer().copy_to_rgba_buffer(pixels.frame_mut());
+        nes.ppu().pattern_source_debug_buffer().copy_to_rgba_buffer(pixel_buffer.frame_mut());
     }
 
     fn width(&self) -> usize {

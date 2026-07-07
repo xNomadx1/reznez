@@ -1,5 +1,4 @@
 use egui::{Context, Ui};
-use pixels::Pixels;
 
 use crate::cartridge::resolved_metadata::{ResolvedMetadata, Vs};
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
@@ -216,10 +215,6 @@ impl WindowRenderer for CartridgeMetadataRenderer {
         });
 
         FlowControl::CONTINUE
-    }
-
-    fn render(&mut self, _world: &mut World, _pixels: &mut Pixels) {
-        // Do nothing yet.
     }
 
     fn width(&self) -> usize {

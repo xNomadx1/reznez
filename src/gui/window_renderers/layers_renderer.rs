@@ -1,5 +1,4 @@
 use egui::{Context, Ui};
-use pixels::Pixels;
 
 use crate::bus::Bus;
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
@@ -7,7 +6,7 @@ use crate::gui::world::World;
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::register::ppu_registers::Emphasis;
-use crate::ppu::render::frame::{DebugBuffer, FrameBuffer};
+use crate::ppu::render::frame::{DebugBuffer, FrameBuffer, PixelBuffer};
 
 const TOP_MENU_BAR_HEIGHT: usize = 24;
 
@@ -37,7 +36,7 @@ impl WindowRenderer for LayersRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, world: &mut World, pixels: &mut Pixels) {
+    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
         let Some(nes) = &world.nes else {
             return;
         };
@@ -60,7 +59,7 @@ impl WindowRenderer for LayersRenderer {
         bus.oam.only_back_sprites().render(bus, &mut self.frame);
         self.buffer.place_frame_buffer_with(261, 245 + TOP_MENU_BAR_HEIGHT, &self.frame, |color_t| color_t_to_rgb(&bus, color_t));
 
-        self.buffer.copy_to_rgba_buffer(pixels.frame_mut());
+        self.buffer.copy_to_rgba_buffer(pixel_buffer.frame_mut());
     }
 
     fn width(&self) -> usize {

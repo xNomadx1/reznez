@@ -1,5 +1,4 @@
 use egui::{Context, Ui};
-use pixels::Pixels;
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
@@ -92,10 +91,6 @@ impl WindowRenderer for ControlsRenderer {
         });
 
         FlowControl::CONTINUE
-    }
-
-    fn render(&mut self, _world: &mut World, _pixels: &mut Pixels) {
-        // Do nothing yet.
     }
 
     fn width(&self) -> usize {

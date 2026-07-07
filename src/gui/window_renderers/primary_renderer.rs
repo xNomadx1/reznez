@@ -5,7 +5,6 @@ use egui::{Align2, Button, CentralPanel, Color32, Context, Frame as EguiFrame, I
 use egui_phosphor::regular::{BUG, FOLDER_OPEN, SLIDERS_HORIZONTAL, INFO};
 use egui_file::FileDialog;
 use log::error;
-use pixels::Pixels;
 pub use winit::dpi::{PhysicalPosition, Position};
 
 use crate::cartridge::header_db::HeaderDb;
@@ -27,6 +26,7 @@ use crate::gui::window_renderers::sprites_renderer::SpritesRenderer;
 use crate::gui::window_renderers::status_renderer::StatusRenderer;
 pub use crate::gui::world::World;
 use crate::ppu::pixel_index::{PixelColumn, PixelRow};
+use crate::ppu::render::frame::PixelBuffer;
 
 const MENU_HOVER_BLUE: Color32 = Color32::from_rgb(70, 90, 140);
 const PAUSED_VERMILION_RED: Color32 = Color32::from_rgb(250, 60, 60);
@@ -291,7 +291,7 @@ impl WindowRenderer for PrimaryRenderer {
         result
     }
 
-    fn render(&mut self, world: &mut World, pixels: &mut Pixels) {
+    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
         if self.paused {
             return;
         }
@@ -301,7 +301,7 @@ impl WindowRenderer for PrimaryRenderer {
                 nes,
                 &world.config,
                 std::mem::replace(&mut world.events, Events::none()),
-                pixels,
+                pixel_buffer,
             );
         }
     }
