@@ -13,7 +13,7 @@ use rayon::prelude::*;
 use reznez::cartridge::header_db::HeaderDb;
 use reznez::controller::joypad::{Button, ButtonStatus};
 use reznez::gui::gui::Events;
-use reznez::ppu::pixel_index::PixelIndex;
+use reznez::ppu::pixel_index::{PixelColumn, PixelRow};
 use reznez::ppu::render::frame::Frame;
 use walkdir::WalkDir;
 
@@ -152,7 +152,7 @@ impl TestSummary {
         let expected_frames: DashMap<RomId, Vec<FrameEntry>> =
             expected_frames.entries_by_rom_id.clone().into_iter().collect();
         roms.entries_by_rom_id.par_iter().for_each(|(rom_id, rom_entry)| {
-            let mut frame = Frame::dummy(PixelIndex::PIXEL_COUNT);
+            let mut frame = Frame::dummy(PixelColumn::COLUMN_COUNT, PixelRow::ROW_COUNT);
             if rom_entry.is_ignored() {
                 test_results.insert(rom_id.clone(), TestStatus::RomIgnored);
             } else if let Some((rom_id, frame_entries)) = expected_frames.remove(rom_id) {

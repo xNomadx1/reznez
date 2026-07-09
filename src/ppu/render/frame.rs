@@ -14,7 +14,11 @@ use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::ppm::Ppm;
 
 pub enum Frame {
-    Dummy(Vec<u8>),
+    Dummy {
+        buffer: Vec<u8>,
+        pixel_width: usize,
+        pixel_height: usize,
+    },
     WindowBacked(Pixels<'static>),
 }
 
@@ -23,30 +27,48 @@ impl Frame {
         Self::WindowBacked(pixels)
     }
 
-    pub fn dummy(len: usize) -> Self {
-        Self::Dummy(vec![0; 4 * len])
+    pub fn dummy(pixel_width: usize, pixel_height: usize) -> Self {
+        Self::Dummy {
+            buffer: vec![0; 4 * pixel_width * pixel_height],
+            pixel_width,
+            pixel_height,
+        }
     }
 
     pub fn exact_sized() -> Self {
-        Self::dummy(PixelIndex::PIXEL_COUNT)
+        Self::dummy(PixelColumn::COLUMN_COUNT, PixelRow::ROW_COUNT)
     }
 
     pub fn frame(&self) -> &[u8] {
         match self {
-            Self::Dummy(backing) => &backing,
+            Self::Dummy { buffer, .. } => &buffer,
             Self::WindowBacked(pixels) => pixels.frame(),
         }
     }
 
     pub fn frame_mut(&mut self) -> &mut [u8] {
         match self {
-            Self::Dummy(backing) => backing.as_mut_slice(),
+            Self::Dummy{ buffer, .. } => buffer.as_mut_slice(),
             Self::WindowBacked(pixels) => pixels.frame_mut(),
         }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn pixel_count(&self) -> usize {
         self.frame().len()
+    }
+
+    pub fn pixel_width(&self) -> usize {
+        match self {
+            Self::Dummy { pixel_width, .. } => *pixel_width,
+            Self::WindowBacked(pixels) => pixels.texture().width() as usize,
+        }
+    }
+
+    pub fn pixel_height(&self) -> usize {
+        match self {
+            Self::Dummy { pixel_height, .. } => *pixel_height,
+            Self::WindowBacked(pixels) => pixels.texture().height() as usize,
+        }
     }
 
     pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
@@ -89,21 +111,21 @@ impl Frame {
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>,
     {
         match self {
-            Self::Dummy(_) => Ok(()),
+            Self::Dummy {..} => Ok(()),
             Self::WindowBacked(pixels) => pixels.render_with(render_function),
         }
     }
 
     pub fn max_texture_dimension_2d(&self) -> usize {
         match self {
-            Self::Dummy(_) => 1_000_000,
+            Self::Dummy {..} => 1_000_000,
             Self::WindowBacked(pixels) => pixels.device().limits().max_texture_dimension_2d as usize,
         }
     }
 
     pub fn wgpu_renderer(&self) -> Option<egui_wgpu::Renderer> {
         match self {
-            Self::Dummy(_) => None,
+            Self::Dummy {..} => None,
             Self::WindowBacked(pixels) => {
                 let renderer_options = egui_wgpu::RendererOptions::default();
                 Some(egui_wgpu::Renderer::new(pixels.device(), pixels.render_texture_format(), renderer_options))
@@ -195,7 +217,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
     }
 
     pub fn place_frame(&mut self, left_column: usize, top_row: usize, frame: &Frame) {
-        assert_eq!(frame.len(), 4 * WIDTH * HEIGHT);
+        assert_eq!(frame.pixel_count(), 4 * WIDTH * HEIGHT);
         let (chunks, remainder): (&[[u8; 4]], &[u8]) = frame.frame().as_chunks();
         assert!(remainder.is_empty());
 
