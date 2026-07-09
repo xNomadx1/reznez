@@ -110,10 +110,6 @@ impl Nes {
         &self.metadata_resolver
     }
 
-    pub fn frame(&self) -> &Frame {
-        self.bus().composite_decoders.get().frame()
-    }
-
     pub fn show_overscan_mut(&mut self) -> &mut bool {
         &mut self.bus.composite_decoders.show_overscan
     }
@@ -219,7 +215,7 @@ impl Nes {
         self.bus.cpu_pinout.reset.set_value(SignalLevel::Low);
     }
 
-    pub fn step_frame(&mut self) {
+    pub fn step_frame(&mut self, frame: &mut Frame) {
         loop {
             if self.bus.cpu_pinout.reset.detect() {
                 // Complete the CPU reset, if one is in progress and nearing completion.
@@ -230,7 +226,7 @@ impl Nes {
                 self.mapper.reset(&mut self.bus);
             }
 
-            let step_result = self.step();
+            let step_result = self.step(frame);
             if step_result.is_last_cycle_of_frame {
                 // Release the RESET button on the console after some time has passed,
                 // allowing the PPU to run while the RESET button was still held down.
@@ -245,7 +241,7 @@ impl Nes {
         }
     }
 
-    pub fn step(&mut self) -> StepResult {
+    pub fn step(&mut self, frame: &mut Frame) -> StepResult {
         let mut step = None;
         let mut is_last_cycle_of_frame = false;
         let (actions, end_reached) = self.bus.master_clock.tick();
@@ -257,8 +253,8 @@ impl Nes {
                 CycleType::CpuFirstHalfWithLogging => self.cpu_step_first_half_with_logging(),
                 CycleType::CpuSecondHalf => step = self.cpu_step_second_half(),
                 CycleType::CpuSecondHalfWithLogging => step = self.cpu_step_second_half_with_logging(),
-                CycleType::PpuFirstHalf => is_last_cycle_of_frame = self.ppu_step_first_half(),
-                CycleType::PpuFirstHalfWithLogging => is_last_cycle_of_frame = self.ppu_step_first_half_with_logging(),
+                CycleType::PpuFirstHalf => is_last_cycle_of_frame = self.ppu_step_first_half(frame),
+                CycleType::PpuFirstHalfWithLogging => is_last_cycle_of_frame = self.ppu_step_first_half_with_logging(frame),
                 CycleType::PpuSecondHalf => self.ppu_step_second_half(),
             }
         }
@@ -345,20 +341,20 @@ impl Nes {
         step
     }
 
-    fn ppu_step_first_half(&mut self) -> bool {
+    fn ppu_step_first_half(&mut self, frame: &mut Frame) -> bool {
         let is_last_cycle_of_frame = self.bus.master_clock.tick_ppu_clock(self.bus.ppu_regs.rendering_enabled()).is_some();
-        Ppu::step_first_half(&mut self.bus, &mut *self.mapper);
+        Ppu::step_first_half(&mut self.bus, &mut *self.mapper, frame);
         is_last_cycle_of_frame
     }
 
-    fn ppu_step_first_half_with_logging(&mut self) -> bool {
+    fn ppu_step_first_half_with_logging(&mut self, frame: &mut Frame) -> bool {
         let is_last_cycle_of_frame = self.bus.master_clock.tick_ppu_clock(self.bus.ppu_regs.rendering_enabled()).is_some();
 
         if log_enabled!(target: "timings", Info) {
             self.snapshots.current().add_ppu_position(self.bus.master_clock().ppu_clock());
         }
 
-        Ppu::step_first_half(&mut self.bus, &mut *self.mapper);
+        Ppu::step_first_half(&mut self.bus, &mut *self.mapper, frame);
 
         self.detect_changes();
 

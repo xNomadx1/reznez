@@ -6,7 +6,7 @@ use crate::gui::world::World;
 use crate::ppu::palette::palette_table_index::PaletteTableIndex;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::pattern_table_side::PatternTableSide;
-use crate::ppu::render::frame::{DebugBuffer, PixelBuffer};
+use crate::ppu::render::frame::{DebugBuffer, Frame};
 use crate::ppu::tile_number::TileNumber;
 
 const TOP_MENU_BAR_HEIGHT: usize = 24;
@@ -38,7 +38,7 @@ impl WindowRenderer for PatternTableRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
+    fn render(&mut self, world: &mut World, frame: &mut Frame) {
         let Some(nes) = &world.nes else {
             return;
         };
@@ -69,7 +69,7 @@ impl WindowRenderer for PatternTableRenderer {
             offset += (8 + 1) * 16 + 10;
         }
 
-        self.buffer.copy_to_rgba_buffer(pixel_buffer.frame_mut());
+        self.buffer.copy_to_rgba_buffer(frame.frame_mut());
     }
 
     fn width(&self) -> usize {

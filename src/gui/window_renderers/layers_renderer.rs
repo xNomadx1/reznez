@@ -6,7 +6,7 @@ use crate::gui::world::World;
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::register::ppu_registers::Emphasis;
-use crate::ppu::render::frame::{DebugBuffer, FrameBuffer, PixelBuffer};
+use crate::ppu::render::frame::{DebugBuffer, FrameBuffer, Frame};
 
 const TOP_MENU_BAR_HEIGHT: usize = 24;
 
@@ -36,20 +36,20 @@ impl WindowRenderer for LayersRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
+    fn render(&mut self, world: &mut World, frame: &mut Frame) {
         let Some(nes) = &world.nes else {
             return;
         };
 
-        self.buffer.place_frame(0, TOP_MENU_BAR_HEIGHT, nes.frame());
-        self.buffer.place_frame(
+        let bus = nes.bus();
+
+        self.buffer.place_frame(0, TOP_MENU_BAR_HEIGHT, frame);
+        self.buffer.place_frame_buffer_with(
             261,
             TOP_MENU_BAR_HEIGHT,
-            // FIXME: This no longer places the background. Add a separate Frame to Ppu.
-            &nes.frame(),
+            nes.ppu().background_buffer(),
+            |color_t| color_t_to_rgb(&bus, color_t),
         );
-
-        let bus = nes.bus();
 
         self.frame.clear();
         bus.oam.only_front_sprites().render(bus, &mut self.frame);
@@ -59,7 +59,7 @@ impl WindowRenderer for LayersRenderer {
         bus.oam.only_back_sprites().render(bus, &mut self.frame);
         self.buffer.place_frame_buffer_with(261, 245 + TOP_MENU_BAR_HEIGHT, &self.frame, |color_t| color_t_to_rgb(&bus, color_t));
 
-        self.buffer.copy_to_rgba_buffer(pixel_buffer.frame_mut());
+        self.buffer.copy_to_rgba_buffer(frame.frame_mut());
     }
 
     fn width(&self) -> usize {

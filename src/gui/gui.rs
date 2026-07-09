@@ -10,7 +10,7 @@ use log::{info, warn};
 use crate::config::{Config, Event};
 use crate::controller::joypad::{Button, ButtonStatus};
 use crate::nes::Nes;
-use crate::ppu::render::frame::{Frame, PixelBuffer};
+use crate::ppu::render::frame::Frame;
 use crate::ppu::render::frame_rate::TargetFrameRate;
 
 const FRAME_DUMP_DIRECTORY: &str = "framedump";
@@ -19,7 +19,7 @@ pub trait Gui {
     fn run(&mut self, nes: Option<Nes>);
 }
 
-pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixel_buffer: &mut PixelBuffer) {
+pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, frame: &mut Frame) {
     let frame_index = nes.bus().ppu_clock().frame();
     let start_time = SystemTime::now();
     let target_frame_rate = config.target_frame_rate;
@@ -33,11 +33,10 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, pixel_b
     }
 
     nes.process_gui_events(&events);
-    nes.step_frame();
-    nes.frame().copy_to_rgba_buffer(pixel_buffer.frame_mut().try_into().unwrap(), nes.bus().composite_decoders.show_overscan);
+    nes.step_frame(frame);
 
     if config.frame_dump {
-        dump_frame(nes.frame(), frame_index);
+        dump_frame(frame, frame_index);
     }
 
     log::logger().flush();

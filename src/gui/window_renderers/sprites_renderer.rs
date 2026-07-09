@@ -4,7 +4,7 @@ use crate::gui::debug_screens::pattern_table::PatternTable;
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 use crate::ppu::palette::rgb::Rgb;
-use crate::ppu::render::frame::{DebugBuffer, PixelBuffer};
+use crate::ppu::render::frame::{DebugBuffer, Frame};
 
 pub struct SpritesRenderer {
     buffer: DebugBuffer<{ SpritesRenderer::WIDTH }, { SpritesRenderer::HEIGHT }>,
@@ -28,7 +28,7 @@ impl WindowRenderer for SpritesRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
+    fn render(&mut self, world: &mut World, frame: &mut Frame) {
         let Some(nes) = &world.nes else {
             return;
         };
@@ -46,7 +46,7 @@ impl WindowRenderer for SpritesRenderer {
             );
         }
 
-        self.buffer.copy_to_rgba_buffer(pixel_buffer.frame_mut());
+        self.buffer.copy_to_rgba_buffer(frame.frame_mut());
     }
 
     fn width(&self) -> usize {

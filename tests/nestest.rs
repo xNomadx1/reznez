@@ -16,6 +16,7 @@ use reznez::memory::cpu::cpu_address::CpuAddress;
 use reznez::bus::AddressBusType;
 use reznez::nes::Nes;
 use reznez::ppu::ppu_clock::{LastCycle, MAX_SCANLINE, PpuClock};
+use reznez::ppu::render::frame::Frame;
 use reznez::ppu::render::frame_rate::TargetFrameRate;
 use reznez::logging::logger;
 use reznez::logging::logger::Logger;
@@ -58,10 +59,11 @@ fn nestest() {
 
     let cartridge = Nes::load_cartridge(&opt.rom_path.unwrap()).unwrap();
     let mut nes = Nes::new(&HeaderDb::load(), &config, &cartridge).unwrap();
+    let mut frame = Frame::exact_sized();
 
     // Step past the Start sequence.
     for _ in 0..21 {
-        nes.step();
+        nes.step(&mut frame);
     }
 
     for expected_state in expected_states {
@@ -71,7 +73,7 @@ fn nestest() {
 
         let current_instruction: Instruction;
         loop {
-            if nes.step().step.is_some()
+            if nes.step(&mut frame).step.is_some()
                     && let Some((instruction, _)) = nes.cpu().mode_state().new_instruction_with_address() {
                 current_instruction = instruction;
                 c = nes.bus().cpu_cycle();
@@ -96,7 +98,7 @@ fn nestest() {
             s = nes.stack_pointer();
 
             // FIXME: Find another way to break that doesn't involve checking for InterpretOpCode.
-            if let Some(step) = nes.step().step && step.has_interpret_op_code() {
+            if let Some(step) = nes.step(&mut frame).step && step.has_interpret_op_code() {
                 break;
             }
         }

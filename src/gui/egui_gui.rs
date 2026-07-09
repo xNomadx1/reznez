@@ -25,7 +25,7 @@ use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::window_renderers::primary_renderer::PrimaryRenderer;
 use crate::gui::world::World;
 use crate::nes::Nes;
-use crate::ppu::render::frame::PixelBuffer;
+use crate::ppu::render::frame::Frame;
 
 #[rustfmt::skip]
 static JOY_1_KEYBOARD_MAPPINGS: LazyLock<HashMap<KeyCode, Button>> = LazyLock::new(|| {
@@ -204,7 +204,7 @@ struct EguiWindow {
 
     // State for the GUI
     window: Arc<Window>,
-    pixel_buffer: PixelBuffer,
+    frame: Frame,
     window_renderer: Box<dyn WindowRenderer>,
 }
 
@@ -259,7 +259,7 @@ impl EguiWindow {
             window_size.height,
             scale_factor,
             window.clone(),
-            PixelBuffer::new(pixels),
+            Frame::new(pixels),
             renderer,
         )
     }
@@ -269,7 +269,7 @@ impl EguiWindow {
         height: u32,
         scale_factor: f32,
         window: Arc<Window>,
-        pixel_buffer: PixelBuffer,
+        frame: Frame,
         window_renderer: Box<dyn WindowRenderer>,
     ) -> Self {
         let egui_ctx = Context::default();
@@ -281,7 +281,7 @@ impl EguiWindow {
             &window,
             None,
             None,
-            Some(pixel_buffer.max_texture_dimension_2d()),
+            Some(frame.max_texture_dimension_2d()),
         );
         let screen_descriptor = ScreenDescriptor {
             pixels_per_point: scale_factor,
@@ -292,12 +292,12 @@ impl EguiWindow {
         Self {
             egui_state,
             screen_descriptor,
-            wgpu_renderer: pixel_buffer.wgpu_renderer(),
+            wgpu_renderer: frame.wgpu_renderer().unwrap(),
             paint_jobs: Vec::new(),
             textures,
             has_presented_frame: false,
             window,
-            pixel_buffer,
+            frame,
             window_renderer,
         }
     }
@@ -308,7 +308,7 @@ impl EguiWindow {
     }
 
     fn draw(&mut self, world: &mut World) -> Result<FlowControl, String> {
-        self.window_renderer.render(world, &mut self.pixel_buffer);
+        self.window_renderer.render(world, &mut self.frame);
 
         // Run the egui frame and create all paint jobs to prepare for rendering.
         let mut raw_input = self.egui_state.take_egui_input(&self.window);
@@ -331,7 +331,7 @@ impl EguiWindow {
             .egui_ctx()
             .tessellate(output.shapes, PRIMARY_WINDOW_SCALE_FACTOR);
 
-        self.pixel_buffer
+        self.frame
             .render_with(|encoder, render_target, context| {
                 context.scaling_renderer.render(encoder, render_target);
                 for (id, delta) in &self.textures.set {

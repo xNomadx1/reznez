@@ -13,6 +13,8 @@ use rayon::prelude::*;
 use reznez::cartridge::header_db::HeaderDb;
 use reznez::controller::joypad::{Button, ButtonStatus};
 use reznez::gui::gui::Events;
+use reznez::ppu::pixel_index::PixelIndex;
+use reznez::ppu::render::frame::Frame;
 use walkdir::WalkDir;
 
 use reznez::logging::logger;
@@ -146,11 +148,11 @@ impl TestSummary {
         }).unwrap();
 
         let test_results = DashMap::new();
-
         let header_db = HeaderDb::load();
         let expected_frames: DashMap<RomId, Vec<FrameEntry>> =
             expected_frames.entries_by_rom_id.clone().into_iter().collect();
         roms.entries_by_rom_id.par_iter().for_each(|(rom_id, rom_entry)| {
+            let mut frame = Frame::dummy(PixelIndex::PIXEL_COUNT);
             if rom_entry.is_ignored() {
                 test_results.insert(rom_id.clone(), TestStatus::RomIgnored);
             } else if let Some((rom_id, frame_entries)) = expected_frames.remove(rom_id) {
@@ -205,10 +207,10 @@ impl TestSummary {
                     let events = Events { should_quit: false, joypad1_button_statuses, joypad2_button_statuses: BTreeMap::new() };
                     nes.process_gui_events(&events);
 
-                    nes.step_frame();
+                    nes.step_frame(&mut frame);
                     if let Some(frame_entry) = frame_entries.get(&frame_number) {
                         let expected_hash = frame_entry.ppm_hash;
-                        let actual_ppm = &nes.frame().to_ppm();
+                        let actual_ppm = frame.to_ppm();
                         let actual_hash = calculate_hash(&actual_ppm);
                         if actual_hash == expected_hash {
                             // FIXME: Hack until we allow different TestStatuses per frame for a single ROM.

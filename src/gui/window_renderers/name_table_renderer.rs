@@ -9,7 +9,7 @@ use crate::ppu::name_table::name_table_quadrant::NameTableQuadrant;
 use crate::ppu::palette::color_t::ColorT;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::register::ppu_registers::Emphasis;
-use crate::ppu::render::frame::{DebugBuffer, FrameBuffer, PixelBuffer};
+use crate::ppu::render::frame::{DebugBuffer, FrameBuffer, Frame};
 
 pub struct NameTableRenderer {
     frame: FrameBuffer<ColorT>,
@@ -38,7 +38,7 @@ impl WindowRenderer for NameTableRenderer {
     }
 
     #[rustfmt::skip]
-    fn render(&mut self, world: &mut World, pixel_buffer: &mut PixelBuffer) {
+    fn render(&mut self, world: &mut World, frame: &mut Frame) {
         let Some(nes) = &world.nes else {
             return;
         };
@@ -75,7 +75,7 @@ impl WindowRenderer for NameTableRenderer {
         self.buffer.place_wrapping_vertical_line(x, y, y + 241, Rgb::new(255, 0, 0));
         self.buffer.place_wrapping_vertical_line(x + 257, y, y + 241, Rgb::new(255, 0, 0));
 
-        self.buffer.copy_to_rgba_buffer(pixel_buffer.frame_mut());
+        self.buffer.copy_to_rgba_buffer(frame.frame_mut());
     }
 
     fn width(&self) -> usize {

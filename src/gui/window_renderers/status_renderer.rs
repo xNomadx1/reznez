@@ -2,7 +2,7 @@ use egui::{Context, Ui};
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
-use crate::ppu::render::frame::PixelBuffer;
+use crate::ppu::render::frame::Frame;
 
 pub struct StatusRenderer;
 
@@ -97,7 +97,7 @@ impl WindowRenderer for StatusRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, _world: &mut World, _pixel_buffer: &mut PixelBuffer) {
+    fn render(&mut self, _world: &mut World, _frame: &mut Frame) {
         // Do nothing yet.
     }
 

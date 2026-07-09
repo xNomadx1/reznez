@@ -8,6 +8,7 @@ use crate::memory::ppu::ppu_address::PpuAddress;
 use crate::memory::signal_level::SignalLevel;
 use crate::ppu::cycle_action::cycle_action::CycleAction;
 use crate::ppu::cycle_action::frame_actions::{FrameActions, NTSC_FRAME_ACTIONS};
+use crate::ppu::palette::color::Color;
 use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::ppu::palette::color_t::ColorT;
@@ -16,7 +17,7 @@ use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
 use crate::ppu::register::ppu_registers::Toggle;
 use crate::ppu::register::registers::attribute_register::AttributeRegister;
 use crate::ppu::register::registers::pattern_register::PatternRegister;
-use crate::ppu::render::frame::{DebugBuffer, FrameBuffer};
+use crate::ppu::render::frame::{DebugBuffer, FrameBuffer, Frame};
 use crate::ppu::sprite::sprite_attributes::{Priority, SpriteAttributes};
 use crate::ppu::sprite::oam_registers::OamRegisters;
 use crate::ppu::sprite::sprite_y::SpriteY;
@@ -78,7 +79,7 @@ impl Ppu {
         }
     }
 
-    pub fn step_first_half(bus: &mut Bus, mapper: &mut dyn Mapper) {
+    pub fn step_first_half(bus: &mut Bus, mapper: &mut dyn Mapper, frame: &mut Frame) {
         let tick_result = bus.ppu_regs.tick(bus.master_clock.ppu_clock());
         if tick_result.rendering_toggled == Some(Toggle::Disable) {
             // "... when rendering is disabled, the value on the PPU address bus is the current value of the v register."
@@ -93,7 +94,7 @@ impl Ppu {
         let len = bus.ppu.frame_actions.current_cycle_actions(bus.ppu_clock()).len();
         for i in 0..len {
             let cycle_action = bus.ppu.frame_actions.current_cycle_actions(bus.master_clock.ppu_clock())[i];
-            Ppu::execute_cycle_action(bus, mapper, cycle_action);
+            Ppu::execute_cycle_action(bus, mapper, frame, cycle_action);
         }
 
         if bus.ppu_regs.suppress_vblank_active {
@@ -160,7 +161,7 @@ impl Ppu {
         }
     }
 
-    fn execute_cycle_action(bus: &mut Bus, mapper: &mut dyn Mapper, cycle_action: CycleAction) {
+    fn execute_cycle_action(bus: &mut Bus, mapper: &mut dyn Mapper, frame: &mut Frame, cycle_action: CycleAction) {
         use CycleAction::*;
         match cycle_action {
             SetPatternIndexAddress => {
@@ -257,6 +258,7 @@ impl Ppu {
                     }
 
                     let color = match (background_color, sprite_color, sprite_priority) {
+                        _ if !bus.composite_decoders.show_overscan && pixel_index.is_in_overscan_region() => Color::BLACK,
                         (Transparent  , Transparent  , _) => bus.palette_ram.backdrop_color(),
                         (Transparent  , Opaque(color), _) => color,
                         (Opaque(color), Transparent  , _) => color,
@@ -264,7 +266,7 @@ impl Ppu {
                         (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
                     };
 
-                    bus.composite_decoders.get_mut().set_color(&bus.master_clock, color, ppumask.emphasis());
+                    bus.composite_decoders.get_mut().set_color(frame, &bus.master_clock, color, ppumask.emphasis());
                     // These two are just for debug screens.
                     bus.ppu.background_buffer[pixel_index] = background_color;
                     bus.ppu.sprite_buffer[pixel_index] = sprite_color;
@@ -434,6 +436,14 @@ impl Ppu {
                 bus.ciram.enable_writes();
             }
         }
+    }
+
+    pub fn background_buffer(&self) -> &FrameBuffer<ColorT> {
+        &self.background_buffer
+    }
+
+    pub fn sprite_buffer(&self) -> &FrameBuffer<ColorT> {
+        &self.sprite_buffer
     }
 
     pub fn pattern_source_debug_buffer(&self) -> &DebugBuffer<{PixelColumn::COLUMN_COUNT}, {PixelRow::ROW_COUNT}> {

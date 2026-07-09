@@ -4,7 +4,7 @@ use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 use crate::bus::AddressBusType;
 use crate::memory::cpu::cpu_address::CpuAddress;
-use crate::ppu::render::frame::PixelBuffer;
+use crate::ppu::render::frame::Frame;
 
 pub struct MemoryViewerRenderer;
 
@@ -44,7 +44,7 @@ impl WindowRenderer for MemoryViewerRenderer {
         FlowControl::CONTINUE
     }
 
-    fn render(&mut self, _world: &mut World, _pixel_buffer: &mut PixelBuffer) {
+    fn render(&mut self, _world: &mut World, _frame: &mut Frame) {
         // Do nothing yet.
     }
 

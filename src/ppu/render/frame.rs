@@ -13,66 +13,64 @@ use crate::ppu::pixel_index::{
 use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::ppm::Ppm;
 
-const STANDARD_WIDTH: u16 = PixelColumn::COLUMN_COUNT as u16;
-const STANDARD_HEIGHT: u16 = PixelRow::ROW_COUNT as u16;
-
-#[derive(Clone, Debug)]
-pub struct Frame {
-    buffer: FrameBuffer<Rgb>,
+pub enum Frame {
+    Dummy(Vec<u8>),
+    WindowBacked(Pixels<'static>),
 }
 
 impl Frame {
-    pub fn new(width: u16, height: u16) -> Self {
-        Self {
-            buffer: FrameBuffer::filled(width, height, Rgb::BLACK),
-        }
+    pub fn new(pixels: Pixels<'static>) -> Self {
+        Self::WindowBacked(pixels)
+    }
+
+    pub fn dummy(len: usize) -> Self {
+        Self::Dummy(vec![0; 4 * len])
     }
 
     pub fn exact_sized() -> Self {
-        Self::new(STANDARD_WIDTH, STANDARD_HEIGHT)
+        Self::dummy(PixelIndex::PIXEL_COUNT)
     }
 
-    pub fn width(&self) -> u16 {
-        self.buffer.column_count
-    }
-
-    pub fn height(&self) -> u16 {
-        self.buffer.row_count
-    }
-
-    pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
-        self.buffer[pixel_index] = rgb;
-    }
-
-    pub fn pixel(&self, index: PixelIndex) -> Rgb {
-        self.buffer[index]
-    }
-
-    pub fn write_all_pixel_data(&self, data: &mut [u8]) {
-        for pixel_index in PixelIndex::iter() {
-            let rgb = self.pixel(pixel_index);
-
-            let index = 3 * pixel_index.to_usize();
-            data[index] = rgb.red();
-            data[index + 1] = rgb.green();
-            data[index + 2] = rgb.blue();
+    pub fn frame(&self) -> &[u8] {
+        match self {
+            Self::Dummy(backing) => &backing,
+            Self::WindowBacked(pixels) => pixels.frame(),
         }
     }
 
-    pub fn copy_to_rgba_buffer(&self, buffer: &mut [u8; 4 * PixelIndex::PIXEL_COUNT], show_overscan: bool) {
-        for pixel_index in PixelIndex::iter() {
-            let mut rgb = self.pixel(pixel_index);
-            if show_overscan && pixel_index.is_in_overscan_region() {
-                // TODO: Probably make these pixels transparent instead.
-                rgb = Rgb::BLACK;
-            }
+    pub fn frame_mut(&mut self) -> &mut [u8] {
+        match self {
+            Self::Dummy(backing) => backing.as_mut_slice(),
+            Self::WindowBacked(pixels) => pixels.frame_mut(),
+        }
+    }
 
-            let index = 4 * pixel_index.to_usize();
-            buffer[index] = rgb.red();
-            buffer[index + 1] = rgb.green();
-            buffer[index + 2] = rgb.blue();
-            // No transparency.
-            buffer[index + 3] = 0xFF;
+    pub fn len(&self) -> usize {
+        self.frame().len()
+    }
+
+    pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
+        let buffer = self.frame_mut();
+        let index = 4 * pixel_index.to_usize();
+        buffer[index] = rgb.red();
+        buffer[index + 1] = rgb.green();
+        buffer[index + 2] = rgb.blue();
+        // No transparency.
+        buffer[index + 3] = 0xFF;
+    }
+
+    pub fn write_all_pixel_data(&self, data: &mut [u8]) {
+        let (input_chunks, remainder): (&[[u8; 4]], &[u8]) = self.frame().as_chunks();
+        assert!(remainder.is_empty());
+        let (output_chunks, remainder): (&mut [[u8; 3]], &mut [u8]) = data.as_chunks_mut();
+        assert!(remainder.is_empty());
+
+        assert_eq!(input_chunks.len(), output_chunks.len());
+
+        for ([ir, ig, ib, _ia], [or, og, ob]) in input_chunks.iter().zip(output_chunks) {
+            *or = *ir;
+            *og = *ig;
+            *ob = *ib;
         }
     }
 
@@ -81,14 +79,36 @@ impl Frame {
         self.write_all_pixel_data(&mut data);
         Ppm::new(data)
     }
-}
 
-// Debug window methods.
-impl Frame {
-    // Used for debug windows only
-    pub fn clear(&mut self) {
-        // FIXME: Don't allocate new FrameBuffers to do this.
-        self.buffer = FrameBuffer::filled(self.buffer.column_count, self.buffer.row_count, Rgb::BLACK);
+    pub fn render_with<F>(&self, render_function: F) -> Result<(), pixels::Error>
+    where
+        F: FnOnce(
+            &mut wgpu::CommandEncoder,
+            &wgpu::TextureView,
+            &PixelsContext,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>,
+    {
+        match self {
+            Self::Dummy(_) => Ok(()),
+            Self::WindowBacked(pixels) => pixels.render_with(render_function),
+        }
+    }
+
+    pub fn max_texture_dimension_2d(&self) -> usize {
+        match self {
+            Self::Dummy(_) => 1_000_000,
+            Self::WindowBacked(pixels) => pixels.device().limits().max_texture_dimension_2d as usize,
+        }
+    }
+
+    pub fn wgpu_renderer(&self) -> Option<egui_wgpu::Renderer> {
+        match self {
+            Self::Dummy(_) => None,
+            Self::WindowBacked(pixels) => {
+                let renderer_options = egui_wgpu::RendererOptions::default();
+                Some(egui_wgpu::Renderer::new(pixels.device(), pixels.render_texture_format(), renderer_options))
+            }
+        }
     }
 }
 
@@ -175,11 +195,15 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
     }
 
     pub fn place_frame(&mut self, left_column: usize, top_row: usize, frame: &Frame) {
-        for index in PixelIndex::iter() {
-            let rgb = frame.pixel(index);
+        assert_eq!(frame.len(), 4 * WIDTH * HEIGHT);
+        let (chunks, remainder): (&[[u8; 4]], &[u8]) = frame.frame().as_chunks();
+        assert!(remainder.is_empty());
+
+        for (index, &[r, g, b, _a]) in chunks.iter().enumerate() {
+            let rgb = Rgb::new(r, g, b);
             self.write(
-                left_column + index.column.to_usize(),
-                top_row + index.row.to_usize(),
+                left_column + index % WIDTH,
+                top_row + index / WIDTH,
                 rgb,
             );
         }
@@ -293,39 +317,5 @@ impl<const WIDTH: usize, const HEIGHT: usize> DebugBuffer<WIDTH, HEIGHT> {
 
     pub fn write_rgbt(&mut self, column: usize, row: usize, rgbt: Rgbt) {
         self.buffer[row][column] = rgbt;
-    }
-}
-
-pub struct PixelBuffer {
-    pixels: Pixels<'static>,
-}
-
-impl PixelBuffer {
-    pub fn new(pixels: Pixels<'static>) -> Self {
-        Self { pixels }
-    }
-
-    pub fn frame_mut(&mut self) -> &mut [u8] {
-        self.pixels.frame_mut()
-    }
-
-    pub fn max_texture_dimension_2d(&self) -> usize {
-        self.pixels.device().limits().max_texture_dimension_2d as usize
-    }
-
-    pub fn wgpu_renderer(&self) -> egui_wgpu::Renderer {
-        let renderer_options = egui_wgpu::RendererOptions::default();
-        egui_wgpu::Renderer::new(self.pixels.device(), self.pixels.render_texture_format(), renderer_options)
-    }
-
-    pub fn render_with<F>(&self, render_function: F) -> Result<(), pixels::Error>
-    where
-        F: FnOnce(
-            &mut wgpu::CommandEncoder,
-            &wgpu::TextureView,
-            &PixelsContext,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>,
-    {
-        self.pixels.render_with(render_function)
     }
 }
