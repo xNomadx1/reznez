@@ -7,9 +7,7 @@ use crate::ppu::palette::rgb::Rgb;
 use crate::ppu::palette::rgbt::Rgbt;
 use crate::gui::debug_screens::pattern_table::Tile;
 use crate::ppu::palette::system_palette::SystemPalette;
-use crate::ppu::pixel_index::{
-    ColumnInTile, PixelColumn, PixelIndex, PixelRow, RowInTile,
-};
+use crate::ppu::pixel_index::{ColumnInTile, PixelColumn, PixelIndex, PixelRow, RowInTile};
 use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::ppm::Ppm;
 
@@ -71,9 +69,23 @@ impl Frame {
         }
     }
 
-    pub fn set_pixel(&mut self, pixel_index: PixelIndex, rgb: Rgb) {
+    pub fn resize(&mut self, new_pixel_width: usize, new_pixel_height: usize) {
+        match self {
+            Self::Dummy { buffer, pixel_width, pixel_height } => {
+                *buffer =  vec![0; 4 * new_pixel_width * new_pixel_height];
+                *pixel_width = new_pixel_width;
+                *pixel_height = new_pixel_height;
+            }
+            Self::WindowBacked(pixels) => pixels.resize_buffer(new_pixel_width as u32, new_pixel_height as u32).unwrap(),
+        }
+    }
+
+    pub fn set_pixel(&mut self, column: usize, row: usize, rgb: Rgb) {
+        assert!(column < self.pixel_width());
+        assert!(row < self.pixel_height());
+
+        let index = 4 * (self.pixel_width() * row + column);
         let buffer = self.frame_mut();
-        let index = 4 * pixel_index.to_usize();
         buffer[index] = rgb.red();
         buffer[index + 1] = rgb.green();
         buffer[index + 2] = rgb.blue();

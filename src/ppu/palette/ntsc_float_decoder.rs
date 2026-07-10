@@ -62,7 +62,7 @@ impl NtscFloatDecoder {
                 row: PixelRow::from_scanline(clock.ppu_clock().scanline()).unwrap(),
             };
             let yuv = Yuv { y, u, v };
-            frame.set_pixel(pixel_index, yuv.to_rgb());
+            frame.set_pixel(pixel_index.column.to_usize(), pixel_index.row.to_usize(), yuv.to_rgb());
         }
     }
 }
