@@ -54,7 +54,7 @@ impl Frame {
     }
 
     pub fn pixel_count(&self) -> usize {
-        self.frame().len()
+        self.pixel_width() * self.pixel_height()
     }
 
     pub fn pixel_width(&self) -> usize {
@@ -97,9 +97,9 @@ impl Frame {
     }
 
     pub fn to_ppm(&self) -> Ppm {
-        let mut data = vec![0; 3 * PixelIndex::PIXEL_COUNT];
+        let mut data = vec![0; 3 * self.pixel_count()];
         self.write_all_pixel_data(&mut data);
-        Ppm::new(data)
+        Ppm::new(data, self.pixel_width(), self.pixel_height())
     }
 
     pub fn render_with<F>(&self, render_function: F) -> Result<(), pixels::Error>
