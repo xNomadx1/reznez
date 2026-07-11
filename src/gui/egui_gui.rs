@@ -150,15 +150,16 @@ impl ApplicationHandler for EguiGui {
                     }
                 }
 
-                if window_id == self.window_manager.primary_window_id
-                    && (self.keyboard.key_pressed(KeyCode::Pause)
-                        || self.keyboard.key_pressed(KeyCode::KeyP)
-                        || self.keyboard.key_pressed(KeyCode::Escape))
-                {
-                    self.window_manager.toggle_pause();
-                }
+                if window_id == self.window_manager.primary_window_id {
+                    self.world.events = poll_button_events(&self.keyboard, &mut self.gamepad_handler, self.active_gamepad_id);
 
-                self.world.events = poll_button_events(&self.keyboard, &mut self.gamepad_handler, self.active_gamepad_id);
+                    if self.keyboard.key_pressed(KeyCode::Pause)
+                        || self.keyboard.key_pressed(KeyCode::KeyP)
+                        || self.keyboard.key_pressed(KeyCode::Escape)
+                    {
+                        self.window_manager.toggle_pause();
+                    }
+                }
 
                 match self.window_manager.draw(&mut self.world, window_id) {
                     Ok(FlowControl { window_args, should_close_window }) => {
@@ -476,18 +477,23 @@ fn poll_button_events(input: &WinitInputHelper, gilrs: &mut gilrs::Gilrs, active
             warn!("Event won't be processed from ignored gamepad {id:?}: {event:?}");
             continue;
         }
+
+        use gilrs::EventType;
         match event {
-            gilrs::EventType::ButtonPressed(_, code) => {
+            EventType::ButtonPressed(_, code) => {
                 if let Some(button) = JOY_1_JOYPAD_MAPPINGS.get(&code.into_u32()) {
                     joypad1_button_statuses.insert(*button, ButtonStatus::Pressed);
                 }
             }
-            gilrs::EventType::ButtonReleased(_, code) => {
+            EventType::ButtonReleased(_, code) => {
                 if let Some(button) = JOY_1_JOYPAD_MAPPINGS.get(&code.into_u32()) {
-                    joypad1_button_statuses.insert(*button, ButtonStatus::Unpressed);
+                    // Currently if a press happens in the same period as an unpress, the press wins.
+                    let _ = joypad1_button_statuses.try_insert(*button, ButtonStatus::Unpressed)
+                        .map_err(|_| info!("Same poll!"));
                 }
             }
-            _ => {}
+            EventType::ButtonChanged(..) => { /* This is redundant upon Pressed/Release. */ }
+            _ => warn!("Unsupported event from gamepad {id:?}: {event:?}"),
         }
     }
 

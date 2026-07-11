@@ -7,6 +7,7 @@
 #![feature(adt_const_params)]
 #![feature(unsized_const_params)]
 #![feature(panic_update_hook)]
+#![feature(map_try_insert)]
 #![expect(incomplete_features)]
 #![expect(clippy::module_inception)]
 #![expect(clippy::new_without_default)]
