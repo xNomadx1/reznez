@@ -3,6 +3,7 @@ use egui_plot::{GridMark, Line, Plot};
 
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
+use crate::ppu::render::frame::Frame;
 
 const SAMPLE_COUNT: u32 = 1000;
 
@@ -29,7 +30,7 @@ impl WindowRenderer for AudioVisualizer {
         "Audio Visualizer".to_string()
     }
 
-    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl {
+    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World, _: &mut Frame) -> FlowControl {
         let Some(nes) = &world.nes else {
             return FlowControl::CONTINUE;
         };

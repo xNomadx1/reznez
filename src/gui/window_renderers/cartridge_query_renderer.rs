@@ -6,6 +6,7 @@ use crate::analysis::cartridge_db;
 use crate::cartridge::resolved_metadata::{ResolvedMetadata, Vs};
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
+use crate::ppu::render::frame::Frame;
 use crate::util::unit::KIBIBYTE;
 
 pub struct CartridgeQueryRenderer {
@@ -28,7 +29,7 @@ impl WindowRenderer for CartridgeQueryRenderer {
         "ROM Query".to_string()
     }
 
-    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, _world: &mut World) -> FlowControl {
+    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, _world: &mut World, _: &mut Frame) -> FlowControl {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 egui::Grid::new("my_grid")

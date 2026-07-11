@@ -18,7 +18,7 @@ impl WindowRenderer for MemoryViewerRenderer {
         "Memory Viewer".to_string()
     }
 
-    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl {
+    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World, _: &mut Frame) -> FlowControl {
         let Some(nes) = &world.nes else {
             return FlowControl::CONTINUE;
         };

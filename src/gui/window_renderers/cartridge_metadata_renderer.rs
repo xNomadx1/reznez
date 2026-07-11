@@ -3,6 +3,7 @@ use egui::{Context, Ui};
 use crate::cartridge::resolved_metadata::{ResolvedMetadata, Vs};
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
+use crate::ppu::render::frame::Frame;
 use crate::util::unit::KIBIBYTE;
 
 pub struct CartridgeMetadataRenderer;
@@ -17,7 +18,7 @@ impl WindowRenderer for CartridgeMetadataRenderer {
         "Status".to_string()
     }
 
-    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl {
+    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World, _: &mut Frame) -> FlowControl {
         let Some(nes) = &world.nes else {
             return FlowControl::CONTINUE;
         };

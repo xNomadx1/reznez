@@ -3,6 +3,7 @@ use egui::{Context, Ui};
 use crate::bus::CompositeDecoderType;
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
+use crate::ppu::render::frame::Frame;
 
 pub struct DisplaySettingsRenderer;
 
@@ -20,10 +21,12 @@ impl WindowRenderer for DisplaySettingsRenderer {
         "Display Settings".to_string()
     }
 
-    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl {
+    fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World, _: &mut Frame) -> FlowControl {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             if let Some(nes) = &mut world.nes {
-                let mut use_ntsc_float_decoder = nes.bus().composite_decoders.selected_decoder == CompositeDecoderType::NtscFloat;
+                let selected_decoder = nes.bus().composite_decoders.pending_decoder
+                    .unwrap_or(nes.bus().composite_decoders.selected_decoder());
+                let mut use_ntsc_float_decoder = selected_decoder == CompositeDecoderType::NtscFloat;
                 egui::Grid::new("my_grid")
                     .num_columns(2)
                     .spacing([40.0, 4.0])
@@ -34,11 +37,14 @@ impl WindowRenderer for DisplaySettingsRenderer {
                         ui.end_row();
                     });
 
-                nes.bus_mut().composite_decoders.selected_decoder = if use_ntsc_float_decoder {
+                let pending_decoder = if use_ntsc_float_decoder {
                     CompositeDecoderType::NtscFloat
                 } else {
                     CompositeDecoderType::SystemPalette
                 };
+                if selected_decoder != pending_decoder {
+                    nes.bus_mut().composite_decoders.pending_decoder = Some(pending_decoder);
+                }
             } else {
                 ui.label("Load a ROM to change display settings.");
             }

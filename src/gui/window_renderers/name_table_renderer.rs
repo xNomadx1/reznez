@@ -33,7 +33,7 @@ impl WindowRenderer for NameTableRenderer {
         "Name Tables".to_string()
     }
 
-    fn ui(&mut self, _ctx: &Context, _ui: &mut Ui, _world: &mut World) -> FlowControl {
+    fn ui(&mut self, _ctx: &Context, _ui: &mut Ui, _world: &mut World, _: &mut Frame) -> FlowControl {
         FlowControl::CONTINUE
     }
 

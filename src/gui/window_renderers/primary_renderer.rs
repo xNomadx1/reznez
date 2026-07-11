@@ -88,7 +88,7 @@ impl WindowRenderer for PrimaryRenderer {
         "REZNEZ".to_string()
     }
 
-    fn ui(&mut self, ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl {
+    fn ui(&mut self, ctx: &Context, ui: &mut Ui, world: &mut World, _: &mut Frame) -> FlowControl {
         let mut result = FlowControl::CONTINUE;
         let mut menu_open = false;
         let rom_loaded = world.nes.is_some();
@@ -303,6 +303,12 @@ impl WindowRenderer for PrimaryRenderer {
                 std::mem::replace(&mut world.events, Events::none()),
                 frame,
             );
+
+            let decoders = &mut nes.bus_mut().composite_decoders;
+            let updated = decoders.apply_pending_decoder();
+            if updated {
+                frame.resize(decoders.get().required_pixel_width(), decoders.get().required_pixel_height());
+            }
         }
     }
 

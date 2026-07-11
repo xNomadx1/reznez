@@ -125,6 +125,7 @@ impl Bus {
             dip_switch,
 
             composite_decoders: CompositeDecoders {
+                pending_decoder: None,
                 selected_decoder: CompositeDecoderType::SystemPalette,
                 system_palette_decoder: SystemPaletteDecoder::new(system_palette),
                 ntsc_float_decoder: NtscFloatDecoder::new(),
@@ -563,7 +564,8 @@ impl Bus {
 }
 
 pub struct CompositeDecoders {
-    pub selected_decoder: CompositeDecoderType,
+    pub pending_decoder: Option<CompositeDecoderType>,
+    selected_decoder: CompositeDecoderType,
 
     pub system_palette_decoder: SystemPaletteDecoder,
     ntsc_float_decoder: NtscFloatDecoder,
@@ -572,6 +574,10 @@ pub struct CompositeDecoders {
 }
 
 impl CompositeDecoders {
+    pub fn selected_decoder(&self) -> CompositeDecoderType {
+        self.selected_decoder
+    }
+
     pub fn get(&self) -> &dyn CompositeDecoder {
         match self.selected_decoder {
             CompositeDecoderType::SystemPalette => &self.system_palette_decoder,
@@ -585,6 +591,15 @@ impl CompositeDecoders {
             CompositeDecoderType::NtscFloat => &mut self.ntsc_float_decoder,
         }
     }
+
+    pub fn apply_pending_decoder(&mut self) -> bool {
+        let changed = self.pending_decoder.is_some();
+        if let Some(decoder) = self.pending_decoder.take() {
+            self.selected_decoder = decoder;
+        }
+
+        changed
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -594,7 +609,7 @@ pub enum AddressBusType {
     DmcDma,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CompositeDecoderType {
     SystemPalette,
     NtscFloat,

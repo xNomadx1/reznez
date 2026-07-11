@@ -320,7 +320,7 @@ impl EguiWindow {
 
         let mut result = FlowControl::CONTINUE;
         let output = self.egui_state.egui_ctx().run_ui(raw_input, |ui| {
-            result = self.window_renderer.ui(self.egui_state.egui_ctx(), ui, world);
+            result = self.window_renderer.ui(self.egui_state.egui_ctx(), ui, world, &mut self.frame);
         });
 
         self.textures.append(output.textures_delta);

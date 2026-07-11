@@ -6,7 +6,7 @@ use crate::ppu::render::frame::Frame;
 
 pub trait WindowRenderer {
     fn name(&self) -> String;
-    fn ui(&mut self, ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl;
+    fn ui(&mut self, ctx: &Context, ui: &mut Ui, world: &mut World, _frame: &mut Frame) -> FlowControl;
     fn render(&mut self, _world: &mut World, _frame: &mut Frame) {
         // Most debug windows don't need to render any pixel graphics.
     }
