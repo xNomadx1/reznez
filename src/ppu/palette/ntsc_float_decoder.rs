@@ -64,7 +64,7 @@ impl NtscFloatDecoder {
 
 impl CompositeDecoder for NtscFloatDecoder {
     fn required_pixel_width(&self) -> usize {
-        256
+        293
     }
 
     fn required_pixel_height(&self) -> usize {
