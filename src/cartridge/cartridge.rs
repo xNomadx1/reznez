@@ -16,7 +16,7 @@ const NES2_0_HEADER_CONSTANT: u8 = 0b10;
 // TODO: Move path and allow_saving elsewhere.
 // TODO: Rename? To CartridgeRom? Name depends on if the trainer can be called ROM or not.
 // See https://wiki.nesdev.org/w/index.php?title=INES
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[derive(Clone, Debug)]
 pub struct Cartridge {
     path: CartridgePath,
@@ -184,7 +184,7 @@ impl CartridgePath {
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[derive(Clone, Debug)]
 pub struct PlayChoice {
     inst_rom: [u8; 8192],

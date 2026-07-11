@@ -7,10 +7,10 @@
 #![feature(adt_const_params)]
 #![feature(unsized_const_params)]
 #![feature(panic_update_hook)]
-#![allow(incomplete_features)]
-#![allow(clippy::module_inception)]
-#![allow(clippy::new_without_default)]
-#![allow(clippy::identity_op)]
+#![expect(incomplete_features)]
+#![expect(clippy::module_inception)]
+#![expect(clippy::new_without_default)]
+#![expect(clippy::identity_op)]
 
 mod apu;
 mod analysis;
@@ -77,7 +77,7 @@ fn main() {
     gui.run(nes);
 }
 
-#[allow(clippy::similar_names)]
+#[expect(clippy::similar_names)]
 fn logger(opt: &Opt) -> Logger {
     let (log_cpu_instructions, log_cpu_steps, log_cpu_flow_control) = if opt.log_cpu_all {
         (true, true, true)

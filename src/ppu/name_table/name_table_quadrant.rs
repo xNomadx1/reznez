@@ -1,5 +1,5 @@
 // modular_bitfield pedantic clippy warnings
-#![allow(clippy::cast_lossless, clippy::no_effect_underscore_binding, clippy::map_unwrap_or)]
+#![expect(clippy::cast_lossless, clippy::no_effect_underscore_binding, clippy::map_unwrap_or)]
 
 use modular_bitfield::Specifier;
 use num_derive::FromPrimitive;

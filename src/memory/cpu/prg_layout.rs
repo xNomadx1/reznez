@@ -13,7 +13,7 @@ pub struct PrgLayouts {
 }
 
 impl PrgLayouts {
-    #[allow(clippy::large_types_passed_by_value)]
+    #[expect(clippy::large_types_passed_by_value)]
     pub const fn new(
         rom_size: u32,
         outer_bank_count: u16,

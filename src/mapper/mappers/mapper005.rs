@@ -419,7 +419,7 @@ impl Mapper005 {
     }
 
     // Write 0x5200
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     fn enable_vertical_split_mode(&mut self, value: u8) {
         let fields = splitbits!(value, "es.ccccc");
         if fields.e {

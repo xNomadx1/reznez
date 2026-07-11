@@ -85,7 +85,6 @@ impl CompositeDecoder for NtscFloatDecoder {
     }
 }
 
-#[allow(dead_code)]
 impl NtscFloatDecoder {
     fn set_pixel_signal_levels(&mut self, clock: &MasterClock, color: Color, emphasis: Emphasis) {
         let column = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap().column;

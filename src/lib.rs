@@ -6,10 +6,10 @@
 #![feature(generic_const_parameter_types)]
 #![feature(adt_const_params)]
 #![feature(unsized_const_params)]
-#![allow(incomplete_features)]
-#![allow(clippy::module_inception)]
-#![allow(clippy::new_without_default)]
-#![allow(clippy::identity_op)]
+#![expect(incomplete_features)]
+#![expect(clippy::module_inception)]
+#![expect(clippy::new_without_default)]
+#![expect(clippy::identity_op)]
 
 pub mod apu;
 pub mod analysis;

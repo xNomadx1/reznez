@@ -11,7 +11,6 @@ Investigate if lack of MMC5 Extended Ram CHR status register is causing bad rend
 Re-allow ReadWriteStatuses for MMC5 Extended RAM.
 Add CHR bank viewer. Allow overriding the selected bank for the game rendering.
 Remove GetSpritePatternHack in ppu.rs.
-Wide pixels.
 Move nestest over to new formatting system.
 Disable OAMDATA writes (other than address increment) during rendering
 Proper encapsulation for PPU registers
@@ -58,10 +57,6 @@ Race conditions between is_in_frame_irq_window and $4017 writes
 PPUMask emphasis (Visual-only test: needs to be very creative since no register reads back emphasis)
 
 FAILING TESTS
-SHX/SXA: https://forums.nesdev.org/viewtopic.php?p=297765
-
-tvpassfail/tv
-
 apu_mixer
 dmc_dma_during_read4
 dmc_tests

@@ -1,6 +1,5 @@
 use crate::ppu::palette::rgb::Rgb;
 
-#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub struct Yuv {
     pub y: f32,
@@ -8,7 +7,6 @@ pub struct Yuv {
     pub v: f32,
 }
 
-#[allow(dead_code)]
 impl Yuv {
     // See https://www.nesdev.org/wiki/NTSC_video#Emulating_in_C++_code
     pub fn to_rgb(self) -> Rgb {

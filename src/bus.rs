@@ -82,7 +82,7 @@ pub struct Bus {
 }
 
 impl Bus {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         master_clock: MasterClock,
         cpu: Cpu,

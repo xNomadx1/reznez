@@ -28,7 +28,7 @@ use reznez::util::hash_util::calculate_hash;
 type Crc = u32;
 type FrameNumber = i64;
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[derive(Clone, Copy)]
 enum Event {
     Reset,
@@ -44,7 +44,7 @@ enum Event {
 }
 
 // FIXME
-#[allow(clippy::type_complexity)]
+#[expect(clippy::type_complexity)]
 static SCHEDULED_EVENTS: LazyLock<BTreeMap<Crc, BTreeMap<FrameNumber, (Event, ButtonStatus)>>> = LazyLock::new(|| {
     let mut presses_by_full_crc: BTreeMap<Crc, Vec<(FrameNumber, FrameNumber, Event)>> = BTreeMap::new();
 

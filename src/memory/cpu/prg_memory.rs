@@ -26,7 +26,7 @@ pub struct PrgMemory {
 }
 
 impl PrgMemory {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         layouts: PrgLayouts,
         base_memory_map_index: u8,

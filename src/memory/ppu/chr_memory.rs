@@ -36,7 +36,7 @@ pub struct ChrMemory {
 }
 
 impl ChrMemory {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         layouts: ChrLayouts,
         base_memory_map_index: u8,

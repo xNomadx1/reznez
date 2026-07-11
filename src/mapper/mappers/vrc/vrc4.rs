@@ -1,4 +1,4 @@
-#![allow(clippy::needless_late_init)]
+#![expect(clippy::needless_late_init)]
 
 use std::collections::BTreeMap;
 

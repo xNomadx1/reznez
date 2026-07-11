@@ -1,4 +1,4 @@
-#![allow(clippy::many_single_char_names)]
+#![expect(clippy::many_single_char_names)]
 
 use log::info;
 use splitbits::{combinebits, splitbits};

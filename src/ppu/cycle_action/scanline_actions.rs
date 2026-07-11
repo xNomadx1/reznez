@@ -4,7 +4,7 @@ use arr_macro::arr;
 
 use crate::ppu::cycle_action::cycle_action::CycleAction;
 
-#[allow(clippy::identity_op)]
+#[expect(clippy::identity_op)]
 pub static VISIBLE_SCANLINE_ACTIONS: LazyLock<ScanlineActions> = LazyLock::new(|| {
     use CycleAction::*;
 
@@ -104,7 +104,7 @@ pub static START_VBLANK_SCANLINE_ACTIONS: LazyLock<ScanlineActions> = LazyLock::
 
 pub static EMPTY_SCANLINE_ACTIONS: LazyLock<ScanlineActions> = LazyLock::new(ScanlineActions::new);
 
-#[allow(clippy::identity_op)]
+#[expect(clippy::identity_op)]
 pub static PRE_RENDER_SCANLINE_ACTIONS: LazyLock<ScanlineActions> = LazyLock::new(|| {
     use CycleAction::*;
 

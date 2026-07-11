@@ -1,5 +1,5 @@
 // Clippy bug.
-#![allow(clippy::needless_borrow)]
+#![expect(clippy::needless_borrow)]
 
 use crate::memory::bank::bank_number::WriteStatus;
 use crate::util::unit::KIBIBYTE;

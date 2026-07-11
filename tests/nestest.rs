@@ -22,7 +22,7 @@ use reznez::logging::logger;
 use reznez::logging::logger::Logger;
 
 #[test]
-#[allow(clippy::many_single_char_names)]
+#[expect(clippy::many_single_char_names)]
 fn nestest() {
     let f = File::open("tests/data/nestest_expected").expect("Test data not found!");
     let expected_states = BufReader::new(f)

@@ -151,7 +151,7 @@ impl Instruction {
     }
 }
 
-#[allow(clippy::upper_case_acronyms)]
+#[expect(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, EnumString)]
 pub enum OpCode {
     // Logical/Arithmetic
@@ -250,7 +250,7 @@ pub enum OpCode {
     JAM,
 }
 
-#[allow(clippy::upper_case_acronyms)]
+#[expect(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum AccessMode {
     Imp,

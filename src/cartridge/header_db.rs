@@ -1,5 +1,5 @@
-#![allow(clippy::unreadable_literal)]
-#![allow(clippy::zero_prefixed_literal)]
+#![expect(clippy::unreadable_literal)]
+#![expect(clippy::zero_prefixed_literal)]
 
 use std::collections::BTreeMap;
 

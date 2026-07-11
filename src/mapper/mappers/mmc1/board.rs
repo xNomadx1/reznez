@@ -1,8 +1,8 @@
 use crate::cartridge::resolved_metadata::ResolvedMetadata;
 use crate::util::unit::KIBIBYTE;
 
-#[allow(non_camel_case_types)]
-#[allow(clippy::upper_case_acronyms)]
+#[expect(non_camel_case_types)]
+#[expect(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Eq, Debug)]
 pub enum Board {
     Unknown,
