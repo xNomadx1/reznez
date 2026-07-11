@@ -125,7 +125,7 @@ impl Bus {
             dip_switch,
 
             composite_decoders: CompositeDecoders {
-                use_ntsc_float_decoder: false,
+                selected_decoder: CompositeDecoderType::SystemPalette,
                 system_palette_decoder: SystemPaletteDecoder::new(system_palette),
                 ntsc_float_decoder: NtscFloatDecoder::new(),
                 show_overscan: false,
@@ -563,7 +563,8 @@ impl Bus {
 }
 
 pub struct CompositeDecoders {
-    pub use_ntsc_float_decoder: bool,
+    pub selected_decoder: CompositeDecoderType,
+
     pub system_palette_decoder: SystemPaletteDecoder,
     ntsc_float_decoder: NtscFloatDecoder,
 
@@ -572,18 +573,16 @@ pub struct CompositeDecoders {
 
 impl CompositeDecoders {
     pub fn get(&self) -> &dyn CompositeDecoder {
-        if self.use_ntsc_float_decoder {
-            &self.ntsc_float_decoder
-        } else {
-            &self.system_palette_decoder
+        match self.selected_decoder {
+            CompositeDecoderType::SystemPalette => &self.system_palette_decoder,
+            CompositeDecoderType::NtscFloat => &self.ntsc_float_decoder,
         }
     }
 
     pub fn get_mut(&mut self) -> &mut dyn CompositeDecoder {
-        if self.use_ntsc_float_decoder {
-            &mut self.ntsc_float_decoder
-        } else {
-            &mut self.system_palette_decoder
+        match self.selected_decoder {
+            CompositeDecoderType::SystemPalette => &mut self.system_palette_decoder,
+            CompositeDecoderType::NtscFloat => &mut self.ntsc_float_decoder,
         }
     }
 }
@@ -593,4 +592,10 @@ pub enum AddressBusType {
     Cpu,
     OamDma,
     DmcDma,
+}
+
+#[derive(PartialEq, Eq)]
+pub enum CompositeDecoderType {
+    SystemPalette,
+    NtscFloat,
 }

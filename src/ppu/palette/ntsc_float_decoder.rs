@@ -4,11 +4,11 @@ use crate::master_clock::MasterClock;
 use crate::ppu::palette::composite_decoder::CompositeDecoder;
 use crate::ppu::palette::color::{Brightness, Color, Hue};
 use crate::ppu::palette::yuv::Yuv;
-use crate::ppu::pixel_index::{PixelColumn, PixelIndex, PixelRow};
+use crate::ppu::pixel_index::{PixelIndex, PixelRow};
 use crate::ppu::register::ppu_registers::Emphasis;
 use crate::ppu::render::frame::Frame;
 
-const WAVELENGTH: u64 = 12;// Terminated voltage levels
+const WAVELENGTH: u64 = 12; // Terminated voltage levels
 
 const LEVELS: [f32; 16] = [
     0.228, 0.312, 0.552, 0.880, // Signal low
@@ -18,7 +18,6 @@ const LEVELS: [f32; 16] = [
 ];
 
 // Reference implementation: https://www.nesdev.org/wiki/NTSC_video#Emulating_in_C++_code
-#[allow(dead_code)]
 pub struct NtscFloatDecoder {
     scanline_start_phase: usize, // 0-11
     signal_levels: [f32; 8 * 256], // All signal levels for a single scanline, 8 per pixel
@@ -33,11 +32,10 @@ impl NtscFloatDecoder {
     }
 
     fn finalize_scanline(&mut self, frame: &mut Frame, clock: &MasterClock) {
-        const WIDTH: usize = 256;
         const SAMPLE_COUNT: usize = 8 * 256;
 
-        for x in 0..WIDTH {
-            let center = x * SAMPLE_COUNT / WIDTH;
+        for column in 0..self.required_pixel_width() {
+            let center = column * SAMPLE_COUNT / self.required_pixel_width();
             let begin = center.saturating_sub(6);
             let end = std::cmp::min(center + 6, SAMPLE_COUNT);
 
@@ -57,17 +55,22 @@ impl NtscFloatDecoder {
                 v  += level * angle.cos() * 2.0;
             }
 
-            let pixel_index = PixelIndex {
-                column: PixelColumn::new(x as u8),
-                row: PixelRow::from_scanline(clock.ppu_clock().scanline()).unwrap(),
-            };
             let yuv = Yuv { y, u, v };
-            frame.set_pixel(pixel_index.column.to_usize(), pixel_index.row.to_usize(), yuv.to_rgb());
+            let row = PixelRow::from_scanline(clock.ppu_clock().scanline()).unwrap().to_usize();
+            frame.set_pixel(column, row, yuv.to_rgb());
         }
     }
 }
 
 impl CompositeDecoder for NtscFloatDecoder {
+    fn required_pixel_width(&self) -> usize {
+        256
+    }
+
+    fn required_pixel_height(&self) -> usize {
+        240
+    }
+
     fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
         let ppuclock = clock.ppu_clock();
         if ppuclock.cycle() == 1 {

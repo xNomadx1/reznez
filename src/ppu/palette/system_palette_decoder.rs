@@ -21,6 +21,14 @@ impl SystemPaletteDecoder {
 }
 
 impl CompositeDecoder for SystemPaletteDecoder {
+    fn required_pixel_width(&self) -> usize {
+        256
+    }
+
+    fn required_pixel_height(&self) -> usize {
+        240
+    }
+
     fn set_color(&mut self, frame: &mut Frame, clock: &MasterClock, color: Color, emphasis: Emphasis) {
         let index = PixelIndex::try_from_clock(clock.ppu_clock()).unwrap();
         let rgb = self.system_palette.lookup_rgb(color, emphasis);

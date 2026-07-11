@@ -39,6 +39,8 @@ pub fn execute_frame(nes: &mut Nes, config: &Config, mut events: Events, frame: 
         dump_frame(frame, frame_index);
     }
 
+    //frame.resize(new_pixel_width, new_pixel_height);
+
     log::logger().flush();
     std::io::stdout().flush().unwrap();
 

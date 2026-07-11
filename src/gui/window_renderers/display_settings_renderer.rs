@@ -1,5 +1,6 @@
 use egui::{Context, Ui};
 
+use crate::bus::CompositeDecoderType;
 use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 
@@ -22,18 +23,24 @@ impl WindowRenderer for DisplaySettingsRenderer {
     fn ui(&mut self, _ctx: &Context, ui: &mut Ui, world: &mut World) -> FlowControl {
         egui::CentralPanel::default().show_inside(ui, |ui| {
             if let Some(nes) = &mut world.nes {
+                let mut use_ntsc_float_decoder = nes.bus().composite_decoders.selected_decoder == CompositeDecoderType::NtscFloat;
                 egui::Grid::new("my_grid")
                     .num_columns(2)
                     .spacing([40.0, 4.0])
                     .striped(true)
                     .show(ui, |ui| {
                         ui.checkbox(&mut nes.bus_mut().composite_decoders.show_overscan, "Show overscan");
-                        ui.checkbox(&mut nes.bus_mut().composite_decoders.use_ntsc_float_decoder, "Use NTSC filter");
+                        ui.checkbox(&mut use_ntsc_float_decoder, "Use NTSC filter");
                         ui.end_row();
                     });
+
+                nes.bus_mut().composite_decoders.selected_decoder = if use_ntsc_float_decoder {
+                    CompositeDecoderType::NtscFloat
+                } else {
+                    CompositeDecoderType::SystemPalette
+                };
             } else {
                 ui.label("Load a ROM to change display settings.");
-
             }
         });
 
