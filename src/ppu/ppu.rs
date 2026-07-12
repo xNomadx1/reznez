@@ -1,10 +1,11 @@
 use log::{info, log_enabled};
 use log::Level::Info;
+use ux::u5;
 
 use crate::mapper::mapper::Mapper;
 use crate::bus::Bus;
 use crate::memory::ppu::chr_memory::PpuPeek;
-use crate::memory::ppu::ppu_address::PpuAddress;
+use crate::memory::ppu::ppu_address::{PaletteRamIndex, PpuAddress};
 use crate::memory::signal_level::SignalLevel;
 use crate::ppu::cycle_action::cycle_action::CycleAction;
 use crate::ppu::cycle_action::frame_actions::{FrameActions, NTSC_FRAME_ACTIONS};
@@ -241,7 +242,7 @@ impl Ppu {
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
                 let (mut sprite_color, sprite_priority, is_sprite_0, ppu_peek) =
                     bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
-                let color;
+                let mut color;
                 if rendering_enabled {
                     if !bus.ppu_regs.sprites_enabled() {
                         sprite_color = ColorT::Transparent;
@@ -259,7 +260,6 @@ impl Ppu {
                     }
 
                     color = match (background_color, sprite_color, sprite_priority) {
-                        _ if !bus.composite_decoders.show_overscan && pixel_index.is_in_overscan_region() => Color::BLACK,
                         (Transparent  , Transparent  , _) => bus.palette_ram.backdrop_color(),
                         (Transparent  , Opaque(color), _) => color,
                         (Opaque(color), Transparent  , _) => color,
@@ -297,7 +297,16 @@ impl Ppu {
                         bus.ppu.pattern_source_debug_buffer.write_rgbt(column, row, bank_pixel);
                     }
                 } else {
-                    color = bus.palette_ram.backdrop_color();
+                    color = if bus.ppu_regs.current_address.is_in_palette_table() {
+                        let index = PaletteRamIndex::new(u5::new((bus.ppu_regs.current_address.to_u16() & 0b0001_1111) as u8));
+                        Color::from(bus.palette_ram.peek(&bus.ppu_regs, index).value())
+                    } else {
+                        bus.palette_ram.backdrop_color()
+                    };
+                }
+
+                if !bus.composite_decoders.show_overscan && pixel_index.is_in_overscan_region() {
+                    color = Color::BLACK;
                 }
 
                 bus.composite_decoders.get_mut().set_color(frame, &bus.master_clock, color, ppumask.emphasis());

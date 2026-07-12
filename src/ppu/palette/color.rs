@@ -18,7 +18,10 @@ impl Color {
     }
 
     pub fn to_greyscale(self) -> Self {
-        Self { hue: Hue::Gray, brightness: self.brightness }
+        Self {
+            hue: Hue::Gray,
+            brightness: self.brightness
+        }
     }
 
     pub fn brightness(self) -> Brightness {
