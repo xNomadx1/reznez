@@ -110,10 +110,6 @@ impl Nes {
         &self.metadata_resolver
     }
 
-    pub fn show_overscan_mut(&mut self) -> &mut bool {
-        &mut self.bus.composite_decoders.show_overscan
-    }
-
     pub fn master_cycle(&self) -> u64 {
         self.bus.master_clock().master_cycle()
     }
@@ -195,6 +191,11 @@ impl Nes {
             prg_memory, chr_memory, name_table_mirrorings,
             config.dip_switch, config.system_palette.clone());
         mapper.init_mapper_params(&mut bus);
+
+        if config.frame_dump {
+            // Frame dump is used for generating framematch expected frames which use overscan.
+            bus.composite_decoders.show_overscan = true;
+        }
 
         let name_table_mirroring = bus.chr_memory().name_table_mirroring();
         metadata_resolver.cartridge.set_name_table_mirroring(name_table_mirroring);
