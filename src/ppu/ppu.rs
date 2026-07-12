@@ -217,6 +217,7 @@ impl Ppu {
             SetPixel => {
                 let clock = bus.ppu_clock();
                 let pixel_index = PixelIndex::try_from_clock(clock).unwrap();
+                let ppumask = bus.ppu_regs.mask();
 
                 let mut background_color = ColorT::Transparent;
                 let mut background_bank_pixel = None;
@@ -240,6 +241,7 @@ impl Ppu {
                 let rendering_enabled = bus.ppu_regs.background_enabled() || bus.ppu_regs.sprites_enabled();
                 let (mut sprite_color, sprite_priority, is_sprite_0, ppu_peek) =
                     bus.ppu.oam_registers.step(&bus.palette_ram, rendering_enabled);
+                let color;
                 if rendering_enabled {
                     if !bus.ppu_regs.sprites_enabled() {
                         sprite_color = ColorT::Transparent;
@@ -247,7 +249,6 @@ impl Ppu {
 
                     let PixelIndex { column, row } = pixel_index;
 
-                    let ppumask = bus.ppu_regs.mask();
                     use ColorT::{Opaque, Transparent};
                     if !ppumask.left_background_columns_enabled() && column.is_in_left_margin() {
                         background_color = Transparent;
@@ -257,7 +258,7 @@ impl Ppu {
                         sprite_color = Transparent;
                     }
 
-                    let color = match (background_color, sprite_color, sprite_priority) {
+                    color = match (background_color, sprite_color, sprite_priority) {
                         _ if !bus.composite_decoders.show_overscan && pixel_index.is_in_overscan_region() => Color::BLACK,
                         (Transparent  , Transparent  , _) => bus.palette_ram.backdrop_color(),
                         (Transparent  , Opaque(color), _) => color,
@@ -266,7 +267,6 @@ impl Ppu {
                         (Opaque(color), Opaque(_)    , Priority::Behind ) => color,
                     };
 
-                    bus.composite_decoders.get_mut().set_color(frame, &bus.master_clock, color, ppumask.emphasis());
                     // These two are just for debug screens.
                     bus.ppu.background_buffer[pixel_index] = background_color;
                     bus.ppu.sprite_buffer[pixel_index] = sprite_color;
@@ -296,7 +296,11 @@ impl Ppu {
                         let row = pixel_index.row.to_usize();
                         bus.ppu.pattern_source_debug_buffer.write_rgbt(column, row, bank_pixel);
                     }
+                } else {
+                    color = bus.palette_ram.backdrop_color();
                 }
+
+                bus.composite_decoders.get_mut().set_color(frame, &bus.master_clock, color, ppumask.emphasis());
             }
 
             MaybeCorruptOamStart => {
