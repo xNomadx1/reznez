@@ -73,12 +73,27 @@ impl Dmc {
             return;
         }
 
+        if !self.output_unit.silenced {
+            if self.output_unit.sample_shifter & 1 == 1 {
+                if self.output_unit.volume < u7::new(126) {
+                    self.output_unit.volume = self.output_unit.volume + u7::new(2);
+                }
+            } else {
+                if self.output_unit.volume > u7::new(1) {
+                    self.output_unit.volume = self.output_unit.volume - u7::new(2);
+                }
+            }
+
+            self.output_unit.sample_shifter >>= 1;
+        }
+
         self.cycles_remaining = self.period;
         self.output_unit.bits_remaining = self.output_unit.bits_remaining.saturating_sub(1);
         if self.output_unit.bits_remaining > 0 {
             return;
         }
 
+        // Output cycle just ended, so start a new one.
         self.output_unit.bits_remaining = 8;
         self.output_unit.silenced = self.sample_buffer.is_none();
         if let Some(sample) = self.sample_buffer.take() {
