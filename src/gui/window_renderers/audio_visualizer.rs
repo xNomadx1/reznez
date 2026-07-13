@@ -39,7 +39,7 @@ impl WindowRenderer for AudioVisualizer {
             nes.bus().apu_regs.pulse1_volumes.clone_to(&mut self.buffer);
             // Stop cloning once egui is upgraded.
             let pulse_1_line = Line::new("Pulse 1", self.buffer.clone());
-            Plot::new("my_plot")
+            Plot::new("Pulse1Plot")
                 .view_aspect(6.0)
                 .allow_scroll(false)
                 .allow_zoom(false)
@@ -61,7 +61,7 @@ impl WindowRenderer for AudioVisualizer {
 
             nes.bus().apu_regs.pulse2_volumes.clone_to(&mut self.buffer);
             let pulse_2_line = Line::new("Pulse 2", self.buffer.clone());
-            Plot::new("my_plot")
+            Plot::new("Pulse2Plot")
                 .view_aspect(6.0)
                 .allow_scroll(false)
                 .allow_zoom(false)
@@ -81,7 +81,7 @@ impl WindowRenderer for AudioVisualizer {
 
                 nes.bus().apu_regs.triangle_volumes.clone_to(&mut self.buffer);
                 let line = Line::new("Triangle", self.buffer.clone());
-                Plot::new("my_plot")
+                Plot::new("TrianglePlot")
                     .view_aspect(6.0)
                     .allow_scroll(false)
                     .allow_zoom(false)
@@ -101,7 +101,7 @@ impl WindowRenderer for AudioVisualizer {
 
                 nes.bus().apu_regs.noise_volumes.clone_to(&mut self.buffer);
                 let line = Line::new("Noise", self.buffer.clone());
-                Plot::new("my_plot")
+                Plot::new("NoisePlot")
                     .view_aspect(6.0)
                     .allow_scroll(false)
                     .allow_zoom(false)
@@ -121,7 +121,7 @@ impl WindowRenderer for AudioVisualizer {
 
                 nes.bus().apu_regs.dmc_volumes.clone_to(&mut self.buffer);
                 let line = Line::new("DMC", self.buffer.clone());
-                Plot::new("my_plot")
+                Plot::new("DMCPlot")
                     .view_aspect(6.0)
                     .allow_scroll(false)
                     .allow_zoom(false)
@@ -141,7 +141,7 @@ impl WindowRenderer for AudioVisualizer {
 
                 nes.bus().apu_regs.mixed_values.clone_to(&mut self.buffer);
                 let line = Line::new("Mixed Samples", self.buffer.clone());
-                Plot::new("my_plot")
+                Plot::new("MixedPlot")
                     .view_aspect(6.0)
                     .allow_scroll(false)
                     .allow_zoom(false)
