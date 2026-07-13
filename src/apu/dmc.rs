@@ -126,11 +126,7 @@ impl Dmc {
     }
 
     pub(super) fn sample_volume(&self) -> u8 {
-        if self.output_unit.silenced {
-            0
-        } else {
-            u8::from(self.output_unit.volume)
-        }
+        u8::from(self.output_unit.volume)
     }
 
     pub fn dma_sample_address(&self) -> CpuAddress {
