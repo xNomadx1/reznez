@@ -116,7 +116,7 @@ impl Apu {
                 }
 
                 let regs = &bus.apu_regs;
-                info!("{:05} ({:08}), PPU Frame: {:05}, P1: {:>2}, P2: {:>2}, T: {:>2}, N: {:>2}, D: {:>2}",
+                info!("{:05} ({:08}), PPU Frame: {:05}, P1: {:>2}, P2: {:>2}, T: {:>2}, N: {:>2}, D: {:>2}, Mix: {:>4}",
                     bus.master_clock.apu_clock.cpu_cycle(),
                     bus.apu_clock().raw_apu_cycle(),
                     bus.ppu_clock().frame(),
@@ -125,6 +125,7 @@ impl Apu {
                     disp(regs.triangle.sample_volume()),
                     disp(regs.noise.sample_volume().into()),
                     disp(regs.dmc.sample_volume()),
+                    mixed_sample.to_string(),
                 );
             }
         }
