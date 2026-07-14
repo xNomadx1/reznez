@@ -24,8 +24,8 @@ impl Mixer {
             noise_force_muted: false,
             dmc_force_muted: false,
 
-            high90_filter: HighPassFilter::new(0.996),
-            high440_filter: HighPassFilter::new(0.983),
+            high90_filter: HighPassFilter::new(0.98735),
+            high440_filter: HighPassFilter::new(0.94099),
             low14000_filter: LowPassFilter::new(0.666),
         }
     }
