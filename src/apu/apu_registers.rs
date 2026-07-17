@@ -14,7 +14,7 @@ use crate::memory::read_result::ReadResult;
 use crate::memory::cpu::cpu_pinout::CpuPinout;
 use crate::util::circular_buffer::CircularBuffer;
 
-const STORED_SAMPLE_COUNT: u32 = 1000;
+const STORED_SAMPLE_COUNT: u32 = 5 * 1000;
 
 pub struct ApuRegisters {
     pub pulse_1: PulseChannel<{NegateBehavior::OnesComplement}>,
@@ -44,8 +44,8 @@ pub struct ApuRegisters {
 }
 
 impl ApuRegisters {
-    pub fn new() -> ApuRegisters {
-        ApuRegisters {
+    pub fn new() -> Self {
+        Self {
             pulse_1: PulseChannel::default(),
             pulse_2: PulseChannel::default(),
             triangle: TriangleChannel::default(),

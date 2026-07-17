@@ -35,4 +35,8 @@ impl <T: Clone> CircularBuffer<T> {
             target[i][1] = self.buffer[i - split_point].clone();
         }
     }
+
+    pub fn slices(&self) -> (&[T], &[T]) {
+        (&self.buffer[self.start_index..], &self.buffer[..self.start_index])
+    }
 }

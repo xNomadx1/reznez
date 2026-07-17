@@ -5,7 +5,7 @@ use crate::gui::window_renderer::{FlowControl, WindowRenderer};
 use crate::gui::world::World;
 use crate::ppu::render::frame::Frame;
 
-const SAMPLE_COUNT: u32 = 1000;
+const SAMPLE_COUNT: u32 = 5 * 1000;
 
 pub struct AudioVisualizer {
     buffer: Vec<[f64; 2]>,
@@ -13,7 +13,7 @@ pub struct AudioVisualizer {
 
 impl AudioVisualizer {
     const WIDTH: usize = 500;
-    const HEIGHT: usize = 700;
+    const HEIGHT: usize = 600;
 
     pub fn new() -> Self {
         let mut buffer = vec![[0.0, 0.0]; SAMPLE_COUNT as usize];
