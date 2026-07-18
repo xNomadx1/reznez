@@ -6,6 +6,7 @@ use crate::gui::world::World;
 use crate::ppu::render::frame::Frame;
 
 const SAMPLE_COUNT: u32 = 5 * 1000;
+const X_AXIS_WIDTH: f64 = SAMPLE_COUNT as f64 / 10.0;
 
 pub struct AudioVisualizer {
     buffer: Vec<[f64; 2]>,
@@ -13,7 +14,7 @@ pub struct AudioVisualizer {
 
 impl AudioVisualizer {
     const WIDTH: usize = 500;
-    const HEIGHT: usize = 600;
+    const HEIGHT: usize = 500;
 
     pub fn new() -> Self {
         let mut buffer = vec![[0.0, 0.0]; SAMPLE_COUNT as usize];
@@ -44,7 +45,8 @@ impl WindowRenderer for AudioVisualizer {
                 .allow_scroll(false)
                 .allow_zoom(false)
                 .allow_drag(false)
-                .clamp_grid(true)
+                .default_x_bounds(0.0, X_AXIS_WIDTH)
+                .default_y_bounds(0.0, 15.0)
                 .show_x(false)
                 .x_grid_spacer(|_| vec![])
                 .y_grid_spacer(|_| vec![
@@ -66,7 +68,8 @@ impl WindowRenderer for AudioVisualizer {
                 .allow_scroll(false)
                 .allow_zoom(false)
                 .allow_drag(false)
-                .clamp_grid(true)
+                .default_x_bounds(0.0, X_AXIS_WIDTH)
+                .default_y_bounds(0.0, 15.0)
                 .show_x(false)
                 .x_grid_spacer(|_| vec![])
                 .y_grid_spacer(|_| vec![
@@ -86,7 +89,8 @@ impl WindowRenderer for AudioVisualizer {
                     .allow_scroll(false)
                     .allow_zoom(false)
                     .allow_drag(false)
-                    .clamp_grid(true)
+                    .default_x_bounds(0.0, X_AXIS_WIDTH)
+                    .default_y_bounds(0.0, 15.0)
                     .show_x(false)
                     .x_grid_spacer(|_| vec![])
                     .y_grid_spacer(|_| vec![
@@ -106,7 +110,8 @@ impl WindowRenderer for AudioVisualizer {
                     .allow_scroll(false)
                     .allow_zoom(false)
                     .allow_drag(false)
-                    .clamp_grid(true)
+                    .default_x_bounds(0.0, X_AXIS_WIDTH)
+                    .default_y_bounds(0.0, 15.0)
                     .show_x(false)
                     .x_grid_spacer(|_| vec![])
                     .y_grid_spacer(|_| vec![
@@ -126,17 +131,17 @@ impl WindowRenderer for AudioVisualizer {
                     .allow_scroll(false)
                     .allow_zoom(false)
                     .allow_drag(false)
-                    .clamp_grid(true)
+                    .default_x_bounds(0.0, X_AXIS_WIDTH)
+                    .default_y_bounds(0.0, 31.0)
                     .show_x(false)
                     .x_grid_spacer(|_| vec![])
                     .y_grid_spacer(|_| vec![
-                        GridMark { value:  5.0, step_size: 5.0 },
-                        GridMark { value: 10.0, step_size: 5.0 },
-                        GridMark { value: 15.0, step_size: 5.0 },
+                        GridMark { value: 0.0, step_size: 7.5 },
+                        GridMark { value: 31.0, step_size: 7.5 },
                     ])
                     .show(ui, |plot_ui| {
                         plot_ui.line(line);
-                        plot_ui.line(Line::new("DMC Y Axis", vec![[0.0, 15.0]]));
+                        plot_ui.line(Line::new("DMC Y Axis", vec![[0.0, 31.0]]));
                     });
 
                 nes.bus().apu_regs.mixed_values.clone_to(&mut self.buffer);
@@ -146,17 +151,18 @@ impl WindowRenderer for AudioVisualizer {
                     .allow_scroll(false)
                     .allow_zoom(false)
                     .allow_drag(false)
-                    .clamp_grid(true)
+                    .default_x_bounds(0.0, X_AXIS_WIDTH)
+                    .default_y_bounds(-1.0, 1.0)
                     .show_x(false)
                     .x_grid_spacer(|_| vec![])
                     .y_grid_spacer(|_| vec![
+                        GridMark { value: -1.0, step_size: 0.5 },
                         GridMark { value: 0.0, step_size: 0.5 },
-                        GridMark { value: 0.5, step_size: 0.5 },
                         GridMark { value: 1.0, step_size: 0.5 },
                     ])
                     .show(ui, |plot_ui| {
                         plot_ui.line(line);
-                        plot_ui.line(Line::new("Mixed Samples Y Axis", vec![[0.0, 1.0]]));
+                        plot_ui.line(Line::new("Mixed Samples Y Axis", vec![[-1.0, 1.0]]));
                     });
         });
 

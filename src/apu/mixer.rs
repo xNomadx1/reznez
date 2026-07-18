@@ -51,6 +51,7 @@ impl HighPassFilter {
         Self { k, prev_input: 0.0, prev_output: 0.0 }
     }
 
+    #[must_use]
     pub fn transform(&mut self, input: f32) -> f32 {
         let output = self.k * self.prev_output + input - self.prev_input;
         self.prev_input = input;
