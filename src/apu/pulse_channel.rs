@@ -50,10 +50,9 @@ impl <const N: NegateBehavior> PulseChannel<N> {
         let fields = splitbits_ux!(value, "llll lppp");
         if self.enabled {
             self.length_counter.start_reload(fields.l);
-            // TODO: Does the envelope restart even if !self.enabled?
-            self.envelope.start();
         }
 
+        self.envelope.start();
         self.sequencer.reset();
         self.sweep.set_current_period_high_and_reset_index(fields.p);
     }
