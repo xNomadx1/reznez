@@ -47,15 +47,14 @@ impl Envelope {
     }
 
     pub fn step(&mut self) {
+        let triggered = self.divider.step();
         if self.start {
-            self.start = false;
             self.decay_level.reload();
-        } else {
-            let triggered = self.divider.step();
-            if triggered {
-                self.decay_level.step();
-            }
+        } else if triggered {
+            self.decay_level.step();
         }
+
+        self.start = false;
     }
 }
 
