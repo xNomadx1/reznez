@@ -23,6 +23,8 @@ pub struct ApuRegisters {
     pub noise: NoiseChannel,
     pub dmc: Dmc,
 
+    pub mixed_samples: Box<[f32; 40]>,
+
     pub pulse1_volumes: CircularBuffer<f64>,
     pub pulse2_volumes: CircularBuffer<f64>,
     pub triangle_volumes: CircularBuffer<f64>,
@@ -51,6 +53,8 @@ impl ApuRegisters {
             triangle: TriangleChannel::default(),
             noise: NoiseChannel::default(),
             dmc: Dmc::default(),
+
+            mixed_samples: vec![0.0; 40].into_boxed_slice().try_into().unwrap(),
 
             pulse1_volumes: CircularBuffer::default_filled(STORED_SAMPLE_COUNT),
             pulse2_volumes: CircularBuffer::default_filled(STORED_SAMPLE_COUNT),

@@ -75,9 +75,11 @@ impl Apu {
     pub fn step(bus: &mut Bus) {
         let cycle = bus.master_clock.apu_clock.cpu_cycle();
         let parity = bus.master_clock.apu_clock.cycle_parity();
+        let sample_index = bus.master_clock.cpu_cycle() as usize % bus.apu_regs.mixed_samples.len();
         info!(target: "apucycles", "APU cycle: {cycle} ({parity})");
 
         let mixed_sample = bus.apu.mixer.mix_filtered(&bus.apu_regs);
+        bus.apu_regs.mixed_samples[sample_index] = mixed_sample;
 
         let clock = &mut bus.master_clock.apu_clock;
         match parity {
@@ -94,12 +96,13 @@ impl Apu {
                 bus.apu_regs.triangle_volumes.push(u8::from(bus.apu_regs.triangle.sample_volume()).into());
                 bus.apu_regs.noise_volumes.push(u8::from(bus.apu_regs.noise.sample_volume()).into());
                 bus.apu_regs.dmc_volumes.push(u8::from(bus.apu_regs.dmc.sample_volume()).into());
-                bus.apu_regs.mixed_values.push(mixed_sample.into());
+                let audio_output = bus.apu_regs.mixed_samples.iter().sum::<f32>() / bus.apu_regs.mixed_samples.len() as f32;
+                bus.apu_regs.mixed_values.push(audio_output.into());
 
                 if bus.apu_clock().raw_apu_cycle().is_multiple_of(20) {
                     let mut queue = bus.apu.pulse_queue.lock().unwrap();
                     if queue.len() < MAX_QUEUE_LENGTH {
-                        queue.push_back(mixed_sample);
+                        queue.push_back(audio_output);
                     } else {
                         warn!("Samples dropped: maximum APU queue length exceeded. Length: {}", queue.len());
                     }
