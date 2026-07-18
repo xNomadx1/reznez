@@ -28,7 +28,6 @@ use reznez::util::hash_util::calculate_hash;
 type Crc = u32;
 type FrameNumber = i64;
 
-#[expect(dead_code)]
 #[derive(Clone, Copy)]
 enum Event {
     Reset,
@@ -110,6 +109,11 @@ static SCHEDULED_EVENTS: LazyLock<BTreeMap<Crc, BTreeMap<FrameNumber, (Event, Bu
 
     // oam-decay-test
     presses_by_full_crc.insert(0x4F8FF278, vec![(20, 40, A)]);
+    // readjoy3/test_buttons
+    presses_by_full_crc.insert(0xEDEA4AF1, vec![
+        (20, 21, A), (25, 26, B), (30, 31, Select), (35, 36, Start),
+        (40, 41, Up), (45, 46, Down), (50, 51, Left), (55, 56, Right),
+    ]);
 
     let mut all_events = BTreeMap::new();
     for (full_crc, presses) in presses_by_full_crc {
