@@ -16,10 +16,9 @@ impl FrequencyTimer {
         self.index = self.period;
     }
 
-    pub fn set_period_high_and_reset_index(&mut self, period_high: u3) {
+    pub fn set_period_high(&mut self, period_high: u3) {
         self.period &= 0b0000_0000_1111_1111;
         self.period |= u16::from(period_high) << 8;
-        self.index = self.period;
     }
 
     pub fn set_period_low(&mut self, period_low: u8) {

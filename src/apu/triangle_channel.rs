@@ -44,7 +44,7 @@ impl TriangleChannel {
             self.length_counter.start_reload(length);
         }
 
-        self.frequency_timer.set_period_high_and_reset_index(period);
+        self.frequency_timer.set_period_high(period);
         self.linear_counter_reload = true;
     }
 

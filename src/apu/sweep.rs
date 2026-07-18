@@ -31,7 +31,7 @@ impl <const N: NegateBehavior> Sweep<N> {
 
     // Write $4003 or $4007
     pub fn set_current_period_high_and_reset_index(&mut self, value: u3) {
-        self.frequency_timer.set_period_high_and_reset_index(value);
+        self.frequency_timer.set_period_high(value);
     }
 
     // Every PUT cycle
