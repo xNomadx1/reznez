@@ -9,13 +9,20 @@ use rodio::{OutputStream, Sink};
 use rodio::source::Source;
 
 use crate::apu::apu_clock::CycleParity;
-use crate::apu::mixer::Mixer;
+use crate::apu::mixer::{HighPassFilter, LowPassFilter, Mixer};
 use crate::bus::Bus;
 
 const MAX_QUEUE_LENGTH: usize = 2 * Mixer::SAMPLE_RATE as usize;
 
 pub struct Apu {
     mixer: Mixer,
+    #[allow(unused)]
+    high90_filter: HighPassFilter,
+    #[allow(unused)]
+    high440_filter: HighPassFilter,
+    #[allow(unused)]
+    low14000_filter: LowPassFilter,
+
     pulse_queue: Arc<Mutex<VecDeque<f32>>>,
 }
 
@@ -40,6 +47,10 @@ impl Apu {
 
         Apu {
             mixer: Mixer::new(),
+            high90_filter: HighPassFilter::new(0.98735),
+            high440_filter: HighPassFilter::new(0.94099),
+            low14000_filter: LowPassFilter::new(0.666),
+
             pulse_queue,
         }
     }
@@ -78,7 +89,7 @@ impl Apu {
         let sample_index = bus.master_clock.cpu_cycle() as usize % bus.apu_regs.mixed_samples.len();
         info!(target: "apucycles", "APU cycle: {cycle} ({parity})");
 
-        let mixed_sample = bus.apu.mixer.mix_filtered(&bus.apu_regs);
+        let mixed_sample = bus.apu.mixer.mix(&bus.apu_regs);
         bus.apu_regs.mixed_samples[sample_index] = mixed_sample;
 
         let clock = &mut bus.master_clock.apu_clock;

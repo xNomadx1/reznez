@@ -1,16 +1,11 @@
 use crate::apu::apu_registers::ApuRegisters;
 
-#[expect(unused)]
 pub struct Mixer {
     pub pulse_1_force_muted: bool,
     pub pulse_2_force_muted: bool,
     pub triangle_force_muted: bool,
     pub noise_force_muted: bool,
     pub dmc_force_muted: bool,
-
-    high90_filter: HighPassFilter,
-    high440_filter: HighPassFilter,
-    low14000_filter: LowPassFilter,
 }
 
 impl Mixer {
@@ -23,21 +18,7 @@ impl Mixer {
             triangle_force_muted: false,
             noise_force_muted: false,
             dmc_force_muted: false,
-
-            high90_filter: HighPassFilter::new(0.98735),
-            high440_filter: HighPassFilter::new(0.94099),
-            low14000_filter: LowPassFilter::new(0.666),
         }
-    }
-
-    pub fn mix_filtered(&mut self, regs: &ApuRegisters) -> f32 {
-        let sample = self.mix(regs);
-        /*
-        sample = self.high90_filter.transform(sample);
-        sample = self.high440_filter.transform(sample);
-        sample = self.low14000_filter.transform(sample);
-        */
-        sample
     }
 
     pub fn mix(&self, regs: &ApuRegisters) -> f32 {
