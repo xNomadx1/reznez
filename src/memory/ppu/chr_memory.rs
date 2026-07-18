@@ -136,7 +136,7 @@ impl ChrMemory {
         assert_eq!(index.read_status(), ReadStatus::Enabled, "Disabling reading CHR RAM isn't supported yet.");
         let value = match index {
             ChrMemoryIndex::Absent => {
-                warn!("Peeking from absent CHR.");
+                // TODO: CHR Open Bus behavior
                 0
             }
             ChrMemoryIndex::Rom(index, ..) => {
@@ -176,6 +176,7 @@ impl ChrMemory {
         let (chr_memory_index, _) = self.current_memory_map().index_for_address(address);
         match chr_memory_index {
             ChrMemoryIndex::Absent => {
+                // TODO: There may be some open bus-related behavior that needs to happen here.
                 warn!("Writing to absent CHR.");
             }
             ChrMemoryIndex::Ram(index, _, WriteStatus::Enabled) => {
